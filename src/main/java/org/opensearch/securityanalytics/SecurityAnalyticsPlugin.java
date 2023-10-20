@@ -40,7 +40,13 @@ import org.opensearch.indices.SystemIndexDescriptor;
 import org.opensearch.jobscheduler.spi.JobSchedulerExtension;
 import org.opensearch.jobscheduler.spi.ScheduledJobParser;
 import org.opensearch.jobscheduler.spi.ScheduledJobRunner;
-import org.opensearch.plugins.*;
+import org.opensearch.plugins.ActionPlugin;
+import org.opensearch.plugins.ClusterPlugin;
+import org.opensearch.plugins.EnginePlugin;
+import org.opensearch.plugins.MapperPlugin;
+import org.opensearch.plugins.Plugin;
+import org.opensearch.plugins.SearchPlugin;
+import org.opensearch.plugins.SystemIndexPlugin;
 import org.opensearch.repositories.RepositoriesService;
 import org.opensearch.rest.RestController;
 import org.opensearch.rest.RestHandler;
@@ -122,12 +128,6 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
     private BuiltinLogTypeLoader builtinLogTypeLoader;
 
     private LogTypeService logTypeService;
-    @Override
-    public Collection<SystemIndexDescriptor> getSystemIndexDescriptors(Settings settings){
-        return Collections.singletonList(new SystemIndexDescriptor(THREAT_INTEL_DATA_INDEX_NAME_PREFIX, "System index used for threat intel data"));
-    }
-
-
 
     @Override
     public Collection<Object> createComponents(Client client,
@@ -170,6 +170,11 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
     @Override
     public Collection<Class<? extends LifecycleComponent>> getGuiceServiceClasses() {
         return List.of(DetectorIndexManagementService.class, BuiltinLogTypeLoader.class);
+    }
+
+    @Override
+    public Collection<SystemIndexDescriptor> getSystemIndexDescriptors(Settings settings){
+        return Collections.singletonList(new SystemIndexDescriptor(THREAT_INTEL_DATA_INDEX_NAME_PREFIX, "System index used for threat intel data"));
     }
 
     @Override
