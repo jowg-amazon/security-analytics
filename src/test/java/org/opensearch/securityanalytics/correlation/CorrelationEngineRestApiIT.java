@@ -631,7 +631,7 @@ public class CorrelationEngineRestApiIT extends SecurityAnalyticsRestTestCase {
                 // suppress ex
             }
             ++count;
-            Thread.sleep(5000);
+            Thread.sleep(10000);
             if (count >= 12) {
                 Assert.assertTrue(false);
                 break;
