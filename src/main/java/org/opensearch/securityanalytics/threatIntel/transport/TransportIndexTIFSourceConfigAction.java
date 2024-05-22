@@ -8,19 +8,14 @@ package org.opensearch.securityanalytics.threatIntel.transport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.OpenSearchStatusException;
-import org.opensearch.ResourceAlreadyExistsException;
-import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.support.ActionFilters;
 import org.opensearch.action.support.HandledTransportAction;
-import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.commons.authuser.User;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.rest.RestStatus;
-import org.opensearch.index.engine.VersionConflictEngineException;
-import org.opensearch.jobscheduler.spi.LockModel;
 import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigResponse;
@@ -28,7 +23,6 @@ import org.opensearch.securityanalytics.threatIntel.action.ThreatIntelIndicesRes
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
-import org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigResponse;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
 import org.opensearch.securityanalytics.transport.SecureTransportAction;
 import org.opensearch.securityanalytics.util.SecurityAnalyticsException;
@@ -37,7 +31,6 @@ import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.TransportService;
 
 import java.util.ConcurrentModificationException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.opensearch.securityanalytics.threatIntel.common.TIFLockService.LOCK_DURATION_IN_SECONDS;
 import static org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigAction.INDEX_TIF_SOURCE_CONFIG_ACTION_NAME;
@@ -69,8 +62,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
             final ThreadPool threadPool,
             final SATIFSourceConfigService satifConfigService,
             final TIFLockService lockService,
-            final Settings settings,
-            final TimeValue indexTimeout
+            final Settings settings
     ) {
         super(INDEX_TIF_SOURCE_CONFIG_ACTION_NAME, transportService, actionFilters, SAIndexTIFSourceConfigRequest::new);
         this.threadPool = threadPool;
@@ -78,7 +70,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
         this.lockService = lockService;
         this.settings = settings;
         this.filterByEnabled = SecurityAnalyticsSettings.FILTER_BY_BACKEND_ROLES.get(this.settings);
-        this.indexTimeout = indexTimeout;
+        this.indexTimeout = SecurityAnalyticsSettings.INDEX_TIMEOUT.get(this.settings);
     }
 
 
@@ -108,7 +100,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                 }
                 try {
                     SATIFSourceConfigDto satifConfigDto = request.getTIFConfigDto();
-                    satifConfigDto.setCreatedByUser(readUserFromThreadContext(threadPool).getName());
+//                    satifConfigDto.setCreatedByUser(readUserFromThreadContext(threadPool).getName()); // thread pool is null
 
                     try {
                         satifConfigService.createIndexAndSaveTIFConfig(satifConfigDto, lock, indexTimeout, new ActionListener<>() {

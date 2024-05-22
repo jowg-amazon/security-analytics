@@ -133,7 +133,7 @@ public class SATIFSourceConfigDao {
     // Get the job config index mapping
     private String getIndexMapping() {
         try {
-            try (InputStream is = SATIFSourceConfigDao.class.getResourceAsStream("/mappings/threat_intel_feed_mapping.json")) {
+            try (InputStream is = SATIFSourceConfigDao.class.getResourceAsStream("/mappings/threat_intel_job_mapping.json")) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                     return reader.lines().map(String::trim).collect(Collectors.joining());
                 }
@@ -164,6 +164,7 @@ public class SATIFSourceConfigDao {
         StashedThreadContext.run(client, () -> client.admin().indices().create(createIndexRequest, new ActionListener<>() {
             @Override
             public void onResponse(final CreateIndexResponse createIndexResponse) {
+                log.debug("Job index created");
                 stepListener.onResponse(null);
             }
 

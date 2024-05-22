@@ -10,7 +10,6 @@ package org.opensearch.securityanalytics.threatIntel.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.common.UUIDs;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.common.io.stream.Writeable;
@@ -37,6 +36,8 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
 
     private static final Logger log = LogManager.getLogger(SATIFSourceConfigDto.class);
 
+
+    public static final String FEED_SOURCE_CONFIG_FIELD = "feed_source_config";
 
     public static final String NO_ID = "";
     public static final String ID_FIELD = "id";
@@ -153,12 +154,15 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
 
     @Override
     public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
-        builder.startObject();
-        builder.field(ID_FIELD, id);
-        builder.field(VERSION_FIELD, version);
+
+        builder.startObject()
+                .startObject(FEED_SOURCE_CONFIG_FIELD)
+                .field(ID_FIELD, id)
+                .field(VERSION_FIELD, version);
+
         builder.field(FEED_NAME_FIELD, feedName);
         builder.field(FEED_FORMAT_FIELD, feedFormat);
-        builder.field(FEED_TYPE_FIELD, feedType);
+        builder.field(FEED_TYPE_FIELD, feedType.name());
         builder.field(CREATED_BY_USER_FIELD, createdByUser);
 
         if (createdAt == null) {
@@ -181,30 +185,18 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
 
         builder.field(SCHEDULE_FIELD, schedule);
         builder.field(STATE_FIELD, state.name());
-
-        if (refreshType == null) {
-            builder.nullField(REFRESH_TYPE_FIELD);
-        } else {
-            builder.field(REFRESH_TYPE_FIELD, refreshType);
-        }
-
+        builder.field(REFRESH_TYPE_FIELD, refreshType);
         if (lastRefreshedTime == null) {
             builder.nullField(LAST_REFRESHED_TIME_FIELD);
         } else {
             builder.timeField(LAST_REFRESHED_TIME_FIELD, String.format(Locale.getDefault(), "%s_in_millis",
                     LAST_REFRESHED_TIME_FIELD), lastRefreshedTime.toEpochMilli());
         }
-
-        if (lastRefreshedUser == null) {
-            builder.nullField(LAST_REFRESHED_USER_FIELD);
-        } else {
-            builder.field(LAST_REFRESHED_USER_FIELD, lastRefreshedUser);
-        }
         builder.field(LAST_REFRESHED_USER_FIELD, lastRefreshedUser);
         builder.field(ENABLED_FIELD, isEnabled);
         builder.field(IOC_MAP_STORE_FIELD, iocMapStore);
         builder.endObject();
-
+        builder.endObject();
         return builder;
     }
 
@@ -231,13 +223,13 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
         Boolean isEnabled = null;
         Map<String,Object> iocMapStore = new HashMap<>();
 
-        xcp.nextToken();
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.currentToken(), xcp);
         while (xcp.nextToken() != XContentParser.Token.END_OBJECT) {
             String fieldName = xcp.currentName();
             xcp.nextToken();
-
             switch (fieldName) {
+                case FEED_SOURCE_CONFIG_FIELD:
+                    break;
                 case FEED_NAME_FIELD:
                     feedName = xcp.text();
                     break;
@@ -312,7 +304,6 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
                 case IOC_MAP_STORE_FIELD:
                     iocMapStore = xcp.map();
                     break;
-
                 default:
                     xcp.skipChildren();
             }

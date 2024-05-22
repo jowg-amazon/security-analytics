@@ -1,12 +1,21 @@
 {
-  "dynamic": "strict",
   "_meta" : {
     "schema_version": 2
   },
   "properties": {
-    "feed_format_config": {
-      "dynamic": "false",
+    "feed_source_config": {
       "properties": {
+        "id": {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "version": {
+          "type": "long"
+        },
         "feed_name": {
           "type" : "text",
           "fields" : {
@@ -91,9 +100,6 @@
         },
         "enabled": {
           "type": "boolean"
-        },
-        "version": {
-          "type": "long"
         }
       }
     },

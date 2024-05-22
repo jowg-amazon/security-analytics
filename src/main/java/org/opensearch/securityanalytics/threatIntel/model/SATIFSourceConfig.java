@@ -10,7 +10,6 @@ package org.opensearch.securityanalytics.threatIntel.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.common.UUIDs;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.common.io.stream.Writeable;
@@ -42,6 +41,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
      * Prefix of indices having threatIntel data
      */
     public static final String THREAT_INTEL_DATA_INDEX_NAME_PREFIX = ".opensearch-sap-threat-intel";
+    public static final String FEED_SOURCE_CONFIG_FIELD = "feed_source_config";
 
     public static final String NO_ID = "";
     public static final String ID_FIELD = "id";
@@ -157,6 +157,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     @Override
     public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
         builder.startObject();
+        builder.startObject(FEED_SOURCE_CONFIG_FIELD);
         builder.field(ID_FIELD, id);
         builder.field(VERSION_FIELD, version);
         builder.field(FEED_NAME_FIELD, feedName);
@@ -195,6 +196,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
         builder.field(ENABLED_FIELD, isEnabled);
         builder.field(IOC_MAP_STORE_FIELD, iocMapStore);
         builder.endObject();
+        builder.endObject();
         return builder;
     }
 
@@ -221,7 +223,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
         Boolean isEnabled = null;
         Map<String,Object> iocMapStore = null;
 
-        xcp.nextToken();
+//        xcp.nextToken();
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.currentToken(), xcp);
         while (xcp.nextToken() != XContentParser.Token.END_OBJECT) {
             String fieldName = xcp.currentName();
