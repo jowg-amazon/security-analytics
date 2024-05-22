@@ -7,6 +7,7 @@ import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.Client;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.jobscheduler.spi.LockModel;
 import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
@@ -25,30 +26,18 @@ public class SATIFSourceConfigService {
     private static final Logger log = LogManager.getLogger(SATIFSourceConfigService.class);
     private final SATIFSourceConfigDao satifConfigDao;
     private final TIFLockService lockService;
-    private final ThreadPool threadPool;
-    private final Settings settings;
-    private volatile Boolean filterByEnabled;
-    private Client client;
 
     /**
      * Default constructor
-     * @param threadPool the thread pool
      * @param lockService the lock service
      */
     @Inject
     public SATIFSourceConfigService(
-            final Client client,
-            final ThreadPool threadPool,
             final SATIFSourceConfigDao satifConfigDao,
-            final TIFLockService lockService,
-            final Settings settings
+            final TIFLockService lockService
     ) {
-        this.client = client;
-        this.threadPool = threadPool;
         this.satifConfigDao = satifConfigDao;
         this.lockService = lockService;
-        this.settings = settings;
-        this.filterByEnabled = SecurityAnalyticsSettings.FILTER_BY_BACKEND_ROLES.get(this.settings);
     }
 
     // converts the DTO to entity
@@ -60,13 +49,14 @@ public class SATIFSourceConfigService {
     public void createIndexAndSaveTIFConfig(
             final SATIFSourceConfigDto satifConfigDto,
             final LockModel lock,
+            final TimeValue indexTimeout,
             final ActionListener<SATIFSourceConfig> listener
     ) {
         StepListener<Void> createIndexStepListener = new StepListener<>();
         createIndexStepListener.whenComplete(v -> {
             try {
                 SATIFSourceConfig satifConfig = convertToSATIFConfig(satifConfigDto);
-                satifConfigDao.indexTIFSourceConfig(satifConfig, new ActionListener<>() {
+                satifConfigDao.indexTIFSourceConfig(satifConfig, indexTimeout, new ActionListener<>() {
                     @Override
                     public void onResponse(SATIFSourceConfig satifSourceConfig) {
                         satifConfig.setId(satifSourceConfig.getId());
@@ -75,7 +65,7 @@ public class SATIFSourceConfigService {
                     }
                     @Override
                     public void onFailure(Exception e) {
-
+                        listener.onFailure(e);
                     }
                 });
             } catch (Exception e) {
@@ -98,7 +88,7 @@ public class SATIFSourceConfigService {
                 satifConfigDto.getVersion(), // set in DTO
                 satifConfigDto.getName(), // comes from request
                 satifConfigDto.getFeedFormat(), // comes from request
-                satifConfigDto.getPrepackaged(), // comes from request
+                satifConfigDto.getFeedType(), // comes from request
                 satifConfigDto.getCreatedByUser(),
                 satifConfigDto.getCreatedAt(), // set in DTO
                 satifConfigDto.getEnabledTime(), // set in DTO

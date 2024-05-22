@@ -15,6 +15,7 @@ import org.opensearch.action.support.HandledTransportAction;
 import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.commons.authuser.User;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.rest.RestStatus;
@@ -51,6 +52,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
     private final ThreadPool threadPool;
     private final Settings settings;
     private volatile Boolean filterByEnabled;
+    private final TimeValue indexTimeout;
 
 
     /**
@@ -67,7 +69,8 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
             final ThreadPool threadPool,
             final SATIFSourceConfigService satifConfigService,
             final TIFLockService lockService,
-            final Settings settings
+            final Settings settings,
+            final TimeValue indexTimeout
     ) {
         super(INDEX_TIF_SOURCE_CONFIG_ACTION_NAME, transportService, actionFilters, SAIndexTIFSourceConfigRequest::new);
         this.threadPool = threadPool;
@@ -75,12 +78,12 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
         this.lockService = lockService;
         this.settings = settings;
         this.filterByEnabled = SecurityAnalyticsSettings.FILTER_BY_BACKEND_ROLES.get(this.settings);
+        this.indexTimeout = indexTimeout;
     }
 
 
     @Override
     protected void doExecute(final Task task, final SAIndexTIFSourceConfigRequest request, final ActionListener<SAIndexTIFSourceConfigResponse> listener) {
-
         // validate user
         User user = readUserFromThreadContext(this.threadPool);
         String validateBackendRoleMessage = validateUserBackendRoles(user, this.filterByEnabled);
@@ -108,7 +111,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                     satifConfigDto.setCreatedByUser(readUserFromThreadContext(threadPool).getName());
 
                     try {
-                        satifConfigService.createIndexAndSaveTIFConfig(satifConfigDto, lock, new ActionListener<>() {
+                        satifConfigService.createIndexAndSaveTIFConfig(satifConfigDto, lock, indexTimeout, new ActionListener<>() {
                             @Override
                             public void onResponse(SATIFSourceConfig satifSourceConfig) {
                                 SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(satifSourceConfig);
@@ -116,7 +119,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                             }
                             @Override
                             public void onFailure(Exception e) {
-
+                                listener.onFailure(e);
                             }
                         });
 
@@ -125,7 +128,6 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                         listener.onFailure(e);
                         log.error("listener failed when executing", e);
                     }
-
 
                 } catch (Exception e) {
                     lockService.releaseLock(lock);
@@ -177,36 +179,36 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
      * This method takes lock as a parameter and is responsible for releasing lock
      * unless exception is thrown
      */
-    protected ActionListener<IndexResponse> postIndexingTifJobParameter(
-            final SATIFSourceConfigDto satifConfigDto,
-            final LockModel lock,
-            final ActionListener<AcknowledgedResponse> listener
-    ) {
-        return ActionListener.wrap(
-                indexResponse -> {
-                    AtomicReference<LockModel> lockReference = new AtomicReference<>(lock);
-                    createThreatIntelFeedData(satifConfigDto, lockService.getRenewLockRunnable(lockReference), ActionListener.wrap(
-                            threatIntelIndicesResponse -> {
-                                if (threatIntelIndicesResponse.isAcknowledged()) {
-                                    lockService.releaseLock(lockReference.get());
-                                    listener.onResponse(new AcknowledgedResponse(true));
-                                } else {
-                                    listener.onFailure(new OpenSearchStatusException("creation of threat intel feed data failed", RestStatus.INTERNAL_SERVER_ERROR));
-                                }
-                            }, listener::onFailure
-                    ));
-                }, e -> {
-                    lockService.releaseLock(lock);
-                    if (e instanceof VersionConflictEngineException) {
-                        log.error("satifConfigDto already exists");
-                        listener.onFailure(new ResourceAlreadyExistsException("satifConfigDto [{}] already exists", satifConfigDto.getName()));
-                    } else {
-                        log.error("Internal server error");
-                        listener.onFailure(e);
-                    }
-                }
-        );
-    }
+//    protected ActionListener<IndexResponse> postIndexingTifJobParameter(
+//            final SATIFSourceConfigDto satifConfigDto,
+//            final LockModel lock,
+//            final ActionListener<AcknowledgedResponse> listener
+//    ) {
+//        return ActionListener.wrap(
+//                indexResponse -> {
+//                    AtomicReference<LockModel> lockReference = new AtomicReference<>(lock);
+//                    createThreatIntelFeedData(satifConfigDto, lockService.getRenewLockRunnable(lockReference), ActionListener.wrap(
+//                            threatIntelIndicesResponse -> {
+//                                if (threatIntelIndicesResponse.isAcknowledged()) {
+//                                    lockService.releaseLock(lockReference.get());
+//                                    listener.onResponse(new AcknowledgedResponse(true));
+//                                } else {
+//                                    listener.onFailure(new OpenSearchStatusException("creation of threat intel feed data failed", RestStatus.INTERNAL_SERVER_ERROR));
+//                                }
+//                            }, listener::onFailure
+//                    ));
+//                }, e -> {
+//                    lockService.releaseLock(lock);
+//                    if (e instanceof VersionConflictEngineException) {
+//                        log.error("satifConfigDto already exists");
+//                        listener.onFailure(new ResourceAlreadyExistsException("satifConfigDto [{}] already exists", satifConfigDto.getName()));
+//                    } else {
+//                        log.error("Internal server error");
+//                        listener.onFailure(e);
+//                    }
+//                }
+//        );
+//    }
 
     // create empty index -
 

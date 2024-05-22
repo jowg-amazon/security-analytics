@@ -188,7 +188,7 @@ public class SAIndexTIFSourceConfigResponse extends ActionResponse implements To
                 .field(SATIFSourceConfigDto.SCHEDULE_FIELD, saTIFConfigDto.getSchedule())
                 // source
                 .field(SATIFSourceConfigDto.CREATED_BY_USER_FIELD, saTIFConfigDto.getCreatedByUser())
-                .field(SATIFSourceConfigDto.PREPACKAGED_FIELD, saTIFConfigDto.getPrepackaged())
+                .field(SATIFSourceConfigDto.FEED_FORMAT_FIELD, saTIFConfigDto.getFeedFormat())
                 .endObject();
 
         return builder.endObject();

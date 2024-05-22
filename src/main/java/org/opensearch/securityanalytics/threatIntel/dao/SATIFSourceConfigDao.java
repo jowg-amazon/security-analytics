@@ -73,25 +73,17 @@ public class SATIFSourceConfigDao {
     private final Client client;
     private final ClusterService clusterService;
     private final ClusterSettings clusterSettings;
-    private final TimeValue indexTimeout;
-    private final AtomicBoolean counter = new AtomicBoolean();
-    private final AtomicInteger checker = new AtomicInteger();
-    private final AtomicReference<Object> response;
     private final ThreadPool threadPool;
-    private final ActionListener<SAIndexTIFSourceConfigResponse> listener;
 
 
-    public SATIFSourceConfigDao(final Client client, final ClusterService clusterService, Settings settings, ThreadPool threadPool, ActionListener<SAIndexTIFSourceConfigResponse> listener) {
+    public SATIFSourceConfigDao(final Client client, final ClusterService clusterService, ThreadPool threadPool) {
         this.client = client;
         this.clusterService = clusterService;
         this.clusterSettings = clusterService.getClusterSettings();
-        this.indexTimeout = SecurityAnalyticsSettings.INDEX_TIMEOUT.get(settings);
         this.threadPool = threadPool;
-        this.listener = listener;
-        this.response = new AtomicReference<>();
     }
 
-    public void indexTIFSourceConfig(SATIFSourceConfig satifSourceConfig, final ActionListener<SATIFSourceConfig> actionListener) throws Exception {
+    public void indexTIFSourceConfig(SATIFSourceConfig satifSourceConfig, TimeValue indexTimeout, final ActionListener<SATIFSourceConfig> actionListener) throws Exception {
         IndexRequest indexRequest = new IndexRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .source(satifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
