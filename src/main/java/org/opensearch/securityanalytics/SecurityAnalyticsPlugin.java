@@ -30,6 +30,8 @@ import org.opensearch.common.settings.SettingsFilter;
 import org.opensearch.commons.alerting.action.AlertingActions;
 import org.opensearch.core.common.io.stream.NamedWriteableRegistry;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
+import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.core.xcontent.XContentParserUtils;
 import org.opensearch.env.Environment;
 import org.opensearch.env.NodeEnvironment;
 import org.opensearch.index.IndexSettings;
@@ -66,6 +68,7 @@ import org.opensearch.securityanalytics.resthandler.*;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.dao.SATIFSourceConfigDao;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
+import org.opensearch.securityanalytics.threatIntel.model.TIFJobParameter;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestIndexTIFConfigAction;
 import org.opensearch.securityanalytics.threatIntel.service.DetectorThreatIntelService;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
@@ -75,7 +78,6 @@ import org.opensearch.securityanalytics.threatIntel.transport.TransportIndexTIFS
 import org.opensearch.securityanalytics.threatIntel.transport.TransportPutTIFJobAction;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.feedMetadata.BuiltInTIFMetadataLoader;
-import org.opensearch.securityanalytics.threatIntel.model.TIFJobParameter;
 import org.opensearch.securityanalytics.threatIntel.service.TIFJobParameterService;
 import org.opensearch.securityanalytics.threatIntel.jobscheduler.TIFJobRunner;
 import org.opensearch.securityanalytics.threatIntel.service.TIFJobUpdateService;
@@ -93,6 +95,7 @@ import org.opensearch.securityanalytics.util.RuleTopicIndices;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.watcher.ResourceWatcherService;
 
+import static org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig.FEED_SOURCE_CONFIG_FIELD;
 import static org.opensearch.securityanalytics.threatIntel.model.TIFJobParameter.THREAT_INTEL_DATA_INDEX_NAME_PREFIX;
 
 public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, MapperPlugin, SearchPlugin, EnginePlugin, ClusterPlugin, SystemIndexPlugin, JobSchedulerExtension {
@@ -110,9 +113,10 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
     public static final String LIST_CORRELATIONS_URI = PLUGINS_BASE_URI + "/correlations";
     public static final String CORRELATION_RULES_BASE_URI = PLUGINS_BASE_URI + "/correlation/rules";
     public static final String TIF_CONFIG_URI = PLUGINS_BASE_URI + "/tif";
-
     public static final String CUSTOM_LOG_TYPE_URI = PLUGINS_BASE_URI + "/logtype";
     public static final String JOB_INDEX_NAME = ".opensearch-sap--job";
+    public static final String JOB_TYPE = "opensearch_sap_job";
+
     public static final Map<String, Object> TIF_JOB_INDEX_SETTING = Map.of(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1, IndexMetadata.SETTING_AUTO_EXPAND_REPLICAS, "0-all", IndexMetadata.SETTING_INDEX_HIDDEN, true);
 
     private CorrelationRuleIndices correlationRuleIndices;
@@ -231,7 +235,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
 
     @Override
     public String getJobType() {
-        return "opensearch_sap_job";
+        return JOB_TYPE;
     }
 
     @Override
@@ -246,7 +250,21 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
 
     @Override
     public ScheduledJobParser getJobParser() {
-        return (parser, id, jobDocVersion) -> SATIFSourceConfig.parse(parser, null, null);
+        return (xcp, id, jobDocVersion) -> {
+            XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
+            while (xcp.nextToken() != XContentParser.Token.END_OBJECT) {
+                String fieldName = xcp.currentName();
+                xcp.nextToken();
+                switch (fieldName) {
+                    case FEED_SOURCE_CONFIG_FIELD:
+                        return SATIFSourceConfig.parse(xcp, id, null);
+                    default:
+                        log.warn("Unsupported document was indexed");
+                        xcp.skipChildren();
+                }
+            }
+            return null;
+        };
     }
 
     @Override
