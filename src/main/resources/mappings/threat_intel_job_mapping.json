@@ -99,6 +99,14 @@
         },
         "ioc_map_store": {
           "type": "object"
+        },
+        "ioc_types": {
+          "type": "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword"
+            }
+          }
         }
       }
     },

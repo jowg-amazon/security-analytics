@@ -105,7 +105,8 @@ public class SATIFSourceConfigService {
                 satifConfigDto.getLastRefreshedTime(), // null
                 satifConfigDto.getLastRefreshedUser(), //null
                 satifConfigDto.isEnabled(), // comes from request
-                satifConfigDto.getIocMapStore()
+                satifConfigDto.getIocMapStore(),
+                satifConfigDto.getIocTypes()
         );
         return satifConfig;
     }

@@ -56,6 +56,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
 
     public void testCreateSATIFSourceConfig() throws IOException {
         Schedule schedule = new IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
+        List<String> iocTypes = List.of("ip", "dns");
         SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(
                 null,
                 null,
@@ -72,7 +73,8 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
                 null,
                 null,
                 true,
-                null
+                null,
+                List.of("ip", "dns")
         );
 
         Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.TIF_CONFIG_URI, Collections.emptyMap(), toHttpEntity(satifSourceConfigDto));
