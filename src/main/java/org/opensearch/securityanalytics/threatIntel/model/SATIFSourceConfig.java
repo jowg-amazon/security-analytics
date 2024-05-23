@@ -79,7 +79,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     //    private Source source; TODO: create Source Object
     private Instant enabledTime;
     private Instant lastUpdateTime;
-    private Schedule schedule;
+    private IntervalSchedule schedule;
     private TIFJobState state;
     public String refreshType;
     public Instant lastRefreshedTime;
@@ -89,7 +89,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     private List<String> iocTypes;
 
     public SATIFSourceConfig(String feed_id, Long version, String feedName, String feedFormat, FeedType feedType, String createdByUser, Instant createdAt,
-                             Instant enabledTime, Instant lastUpdateTime, Schedule schedule, TIFJobState state, String refreshType, Instant lastRefreshedTime, String lastRefreshedUser,
+                             Instant enabledTime, Instant lastUpdateTime, IntervalSchedule schedule, TIFJobState state, String refreshType, Instant lastRefreshedTime, String lastRefreshedUser,
                              Boolean isEnabled, Map<String, Object> iocMapStore, List<String> iocTypes) {
         this.feed_id = feed_id == null ? UUIDs.base64UUID() : feed_id;
         this.version = version != null ? version : NO_VERSION;
@@ -224,7 +224,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
         Instant createdAt = null;
         Instant enabledTime = null;
         Instant lastUpdateTime = null;
-        Schedule schedule = null;
+        IntervalSchedule schedule = null;
         TIFJobState state = null;
         String refreshType = null;
         Instant lastRefreshedTime = null;
@@ -284,7 +284,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
                     }
                     break;
                 case SCHEDULE_FIELD:
-                    schedule = ScheduleParser.parse(xcp);
+                    schedule = (IntervalSchedule) ScheduleParser.parse(xcp);
                     break;
                 case STATE_FIELD:
                     if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
@@ -443,10 +443,10 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     public void setLastUpdateTime(Instant lastUpdateTime) {
         this.lastUpdateTime = lastUpdateTime;
     }
-    public Schedule getSchedule() {
+    public IntervalSchedule getSchedule() {
         return this.schedule;
     }
-    public void setSchedule(Schedule schedule) {
+    public void setSchedule(IntervalSchedule schedule) {
         this.schedule = schedule;
     }
     public TIFJobState getState() {

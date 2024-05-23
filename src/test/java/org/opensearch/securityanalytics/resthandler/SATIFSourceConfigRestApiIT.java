@@ -55,8 +55,8 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
     private String matchAllSearchBody = "{\"size\": 1000, \"query\" : {\"match_all\":{}}}";
 
     public void testCreateSATIFSourceConfig() throws IOException {
-        Schedule schedule = new IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
-        List<String> iocTypes = List.of("ip", "dns");
+        IntervalSchedule schedule = new IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
+
         SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(
                 null,
                 null,
