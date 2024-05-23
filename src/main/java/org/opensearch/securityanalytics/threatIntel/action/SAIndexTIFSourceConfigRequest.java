@@ -29,8 +29,8 @@ import java.util.List;
 public class SAIndexTIFSourceConfigRequest extends ActionRequest implements IndexTIFSourceConfigRequest {
     private static final ParameterValidator VALIDATOR = new ParameterValidator();
     private String tifSourceConfigId;
-    private WriteRequest.RefreshPolicy refreshPolicy;
-    private RestRequest.Method method;
+    private final WriteRequest.RefreshPolicy refreshPolicy;
+    private final RestRequest.Method method;
     private SATIFSourceConfigDto satifSourceConfigDto;
 
     public SAIndexTIFSourceConfigRequest(String tifSourceConfigId,
@@ -77,6 +77,10 @@ public class SAIndexTIFSourceConfigRequest extends ActionRequest implements Inde
 
     public void setTIFConfigDto(SATIFSourceConfigDto saTifConfigDto) {
         this.satifSourceConfigDto = saTifConfigDto;
+    }
+
+    public WriteRequest.RefreshPolicy getRefreshPolicy() {
+        return refreshPolicy;
     }
 
     @Override

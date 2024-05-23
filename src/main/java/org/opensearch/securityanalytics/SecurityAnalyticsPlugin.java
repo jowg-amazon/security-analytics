@@ -68,7 +68,6 @@ import org.opensearch.securityanalytics.resthandler.*;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.dao.SATIFSourceConfigDao;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
-import org.opensearch.securityanalytics.threatIntel.model.TIFJobParameter;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestIndexTIFConfigAction;
 import org.opensearch.securityanalytics.threatIntel.service.DetectorThreatIntelService;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;

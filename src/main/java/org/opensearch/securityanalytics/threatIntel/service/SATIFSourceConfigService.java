@@ -3,6 +3,7 @@ package org.opensearch.securityanalytics.threatIntel.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.action.StepListener;
+import org.opensearch.action.support.WriteRequest;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.core.action.ActionListener;
@@ -20,23 +21,23 @@ import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
  */
 public class SATIFSourceConfigService {
     private static final Logger log = LogManager.getLogger(SATIFSourceConfigService.class);
-    private final SATIFSourceConfigDao satifConfigDao;
+    private final SATIFSourceConfigDao satifSourceConfigDao;
     private final TIFLockService lockService;
 
     /**
      * Default constructor
+     * @param satifSourceConfigDao the tif source config dao
      * @param lockService the lock service
      */
     @Inject
     public SATIFSourceConfigService(
-            final SATIFSourceConfigDao satifConfigDao,
+            final SATIFSourceConfigDao satifSourceConfigDao,
             final TIFLockService lockService
     ) {
-        this.satifConfigDao = satifConfigDao;
+        this.satifSourceConfigDao = satifSourceConfigDao;
         this.lockService = lockService;
     }
 
-    // converts the DTO to entity
 
     /**
      * This method takes lock as a parameter and is responsible for releasing lock
@@ -46,6 +47,7 @@ public class SATIFSourceConfigService {
             final SATIFSourceConfigDto satifConfigDto,
             final LockModel lock,
             final TimeValue indexTimeout,
+            WriteRequest.RefreshPolicy refreshPolicy,
             final ActionListener<SATIFSourceConfig> listener
     ) {
         StepListener<Void> createIndexStepListener = new StepListener<>();
@@ -53,7 +55,10 @@ public class SATIFSourceConfigService {
             try {
                 SATIFSourceConfig satifSourceConfig = convertToSATIFConfig(satifConfigDto);
                 satifSourceConfig.setState(TIFJobState.AVAILABLE);
-                satifConfigDao.indexTIFSourceConfig(satifSourceConfig, indexTimeout, new ActionListener<>() {
+                satifSourceConfigDao.indexTIFSourceConfig(satifSourceConfig,
+                        indexTimeout,
+                        refreshPolicy,
+                        new ActionListener<>() {
                     @Override
                     public void onResponse(SATIFSourceConfig response) {
                         satifSourceConfig.setFeed_id(response.getFeed_id());
@@ -73,33 +78,34 @@ public class SATIFSourceConfigService {
             log.error("failed to release lock", exception);
             listener.onFailure(exception);
         });
-        // 1st step - create job index if it doesn't exist (.opensearch-sap--job)
-        satifConfigDao.createJobIndexIfNotExists(createIndexStepListener);
+        satifSourceConfigDao.createJobIndexIfNotExists(createIndexStepListener);
     }
 
-
-    public SATIFSourceConfig convertToSATIFConfig(SATIFSourceConfigDto satifConfigDto) {
-        // might need to do additional configuration
-        SATIFSourceConfig satifConfig = new SATIFSourceConfig(
-                satifConfigDto.getFeed_id(), // set in DTO
-                satifConfigDto.getVersion(), // set in DTO
-                satifConfigDto.getName(), // comes from request
-                satifConfigDto.getFeedFormat(), // comes from request
-                satifConfigDto.getFeedType(), // comes from request
-                satifConfigDto.getCreatedByUser(),
-                satifConfigDto.getCreatedAt(), // set in DTO
-                satifConfigDto.getEnabledTime(), // set in DTO
-                satifConfigDto.getLastUpdateTime(), // set in DTO
-                satifConfigDto.getSchedule(), // comes from request
-                satifConfigDto.getState(), // set in DTO
-                satifConfigDto.getRefreshType(), // null
-                satifConfigDto.getLastRefreshedTime(), // null
-                satifConfigDto.getLastRefreshedUser(), //null
-                satifConfigDto.isEnabled(), // comes from request
-                satifConfigDto.getIocMapStore(),
-                satifConfigDto.getIocTypes()
+    /**
+     * Converts the DTO to entity
+     * @param satifSourceConfigDto
+     * @return satifSourceConfig
+     */
+    public SATIFSourceConfig convertToSATIFConfig(SATIFSourceConfigDto satifSourceConfigDto) {
+        return new SATIFSourceConfig(
+                satifSourceConfigDto.getFeed_id(),
+                satifSourceConfigDto.getVersion(),
+                satifSourceConfigDto.getName(),
+                satifSourceConfigDto.getFeedFormat(),
+                satifSourceConfigDto.getFeedType(),
+                satifSourceConfigDto.getCreatedByUser(),
+                satifSourceConfigDto.getCreatedAt(),
+                satifSourceConfigDto.getEnabledTime(),
+                satifSourceConfigDto.getLastUpdateTime(),
+                satifSourceConfigDto.getSchedule(),
+                satifSourceConfigDto.getState(),
+                satifSourceConfigDto.getRefreshType(),
+                satifSourceConfigDto.getLastRefreshedTime(),
+                satifSourceConfigDto.getLastRefreshedUser(),
+                satifSourceConfigDto.isEnabled(),
+                satifSourceConfigDto.getIocMapStore(),
+                satifSourceConfigDto.getIocTypes()
         );
-        return satifConfig;
     }
 
 }

@@ -143,10 +143,10 @@ import static org.opensearch.securityanalytics.util.RestHandlerUtils._ID;
 import static org.opensearch.securityanalytics.util.RestHandlerUtils._VERSION;
 
 public class SAIndexTIFSourceConfigResponse extends ActionResponse implements ToXContentObject, IndexTIFSourceConfigResponse {
-    private String tifConfigId;
-    private Long version;
-    private RestStatus status;
-    private SATIFSourceConfigDto saTIFConfigDto;
+    private final String tifConfigId;
+    private final Long version;
+    private final RestStatus status;
+    private final SATIFSourceConfigDto saTIFConfigDto;
 
     public SAIndexTIFSourceConfigResponse(String id, Long version, RestStatus status, SATIFSourceConfigDto tifConfig) {
         super();
@@ -182,12 +182,15 @@ public class SAIndexTIFSourceConfigResponse extends ActionResponse implements To
         builder.startObject("tif_config")
                 .field(SATIFSourceConfigDto.FEED_FORMAT_FIELD, saTIFConfigDto.getFeedFormat())
                 .field(SATIFSourceConfigDto.FEED_NAME_FIELD, saTIFConfigDto.getName())
+                .field(SATIFSourceConfigDto.FEED_TYPE_FIELD, saTIFConfigDto.getFeedType())
                 .field(SATIFSourceConfigDto.STATE_FIELD, saTIFConfigDto.getState())
                 .field(SATIFSourceConfigDto.ENABLED_TIME_FIELD, saTIFConfigDto.getEnabledTime())
+                .field(SATIFSourceConfigDto.ENABLED_FIELD, saTIFConfigDto.isEnabled())
                 .field(SATIFSourceConfigDto.LAST_REFRESHED_TIME_FIELD, saTIFConfigDto.getLastRefreshedTime())
                 .field(SATIFSourceConfigDto.SCHEDULE_FIELD, saTIFConfigDto.getSchedule())
                 // source
                 .field(SATIFSourceConfigDto.CREATED_BY_USER_FIELD, saTIFConfigDto.getCreatedByUser())
+                .field(SATIFSourceConfigDto.IOC_TYPES_FIELD, saTIFConfigDto.getIocTypes())
                 .endObject();
 
         return builder.endObject();

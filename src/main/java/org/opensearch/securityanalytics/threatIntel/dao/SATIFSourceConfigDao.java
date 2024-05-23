@@ -50,7 +50,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
- * CRUD for threat intel feeds config object
+ * CRUD for threat intel feeds source config object
  */
 public class SATIFSourceConfigDao {
     private static final Logger log = LogManager.getLogger(SATIFSourceConfigDao.class);
@@ -67,10 +67,13 @@ public class SATIFSourceConfigDao {
         this.threadPool = threadPool;
     }
 
-    public void indexTIFSourceConfig(SATIFSourceConfig satifSourceConfig, TimeValue indexTimeout, final ActionListener<SATIFSourceConfig> actionListener) throws Exception {
+    public void indexTIFSourceConfig(SATIFSourceConfig satifSourceConfig,
+                                     TimeValue indexTimeout,
+                                     WriteRequest.RefreshPolicy refreshPolicy,
+                                     final ActionListener<SATIFSourceConfig> actionListener) throws Exception {
         IndexRequest indexRequest = new IndexRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
                 .id(satifSourceConfig.getFeed_id())
-                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
+                .setRefreshPolicy(refreshPolicy)
                 .source(satifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
                 .timeout(indexTimeout);
         log.debug("Indexing tif source config");
@@ -89,8 +92,6 @@ public class SATIFSourceConfigDao {
     public ThreadPool getThreadPool() {
         return threadPool;
     }
-
-
 
 
     // Initialize the tif source config index if it doesn't exist
