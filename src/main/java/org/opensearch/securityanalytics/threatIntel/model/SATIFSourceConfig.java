@@ -10,6 +10,7 @@ package org.opensearch.securityanalytics.threatIntel.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.opensearch.common.UUIDs;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.common.io.stream.Writeable;
@@ -44,7 +45,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     public static final String FEED_SOURCE_CONFIG_FIELD = "feed_source_config";
 
     public static final String NO_ID = "";
-    public static final String ID_FIELD = "id";
+    public static final String ID_FIELD = "feed_id";
 
     public static final Long NO_VERSION = 1L;
     public static final String VERSION_FIELD = "version";
@@ -64,7 +65,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     public static final String ENABLED_FIELD = "enabled";
     public static final String IOC_MAP_STORE_FIELD = "ioc_map_store";
 
-    private String id;
+    private String feed_id;
     private Long version;
     private String feedName;
     private String feedFormat;
@@ -83,10 +84,10 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     private Boolean isEnabled;
     private Map<String, Object> iocMapStore;
 
-    public SATIFSourceConfig(String id, Long version, String feedName, String feedFormat, FeedType feedType, String createdByUser, Instant createdAt,
+    public SATIFSourceConfig(String feed_id, Long version, String feedName, String feedFormat, FeedType feedType, String createdByUser, Instant createdAt,
                              Instant enabledTime, Instant lastUpdateTime, Schedule schedule, TIFJobState state, String refreshType, Instant lastRefreshedTime, String lastRefreshedUser,
                              Boolean isEnabled, Map<String, Object> iocMapStore) {
-        this.id = id != null ? id : NO_ID;
+        this.feed_id = feed_id == null ? UUIDs.base64UUID() : feed_id;
         this.version = version != null ? version : NO_VERSION;
         this.feedName = feedName;
         this.feedFormat = feedFormat;
@@ -136,7 +137,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     }
 
     public void writeTo(final StreamOutput out) throws IOException {
-        out.writeString(id);
+        out.writeString(feed_id);
         out.writeLong(version);
         out.writeString(feedName);
         out.writeString(feedFormat);
@@ -156,14 +157,14 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
 
     @Override
     public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
-        builder.startObject();
-        builder.startObject(FEED_SOURCE_CONFIG_FIELD);
-        builder.field(ID_FIELD, id);
-        builder.field(VERSION_FIELD, version);
-        builder.field(FEED_NAME_FIELD, feedName);
-        builder.field(FEED_FORMAT_FIELD, feedFormat);
-        builder.field(FEED_TYPE_FIELD, feedType.name());
-        builder.field(CREATED_BY_USER_FIELD, createdByUser);
+        builder.startObject()
+                .startObject(FEED_SOURCE_CONFIG_FIELD)
+                .field(ID_FIELD, feed_id)
+                .field(VERSION_FIELD, version)
+                .field(FEED_NAME_FIELD, feedName)
+                .field(FEED_FORMAT_FIELD, feedFormat)
+                .field(FEED_TYPE_FIELD, feedType.name())
+                .field(CREATED_BY_USER_FIELD, createdByUser);
 
         if (createdAt == null) {
             builder.nullField(CREATED_AT_FIELD);
@@ -201,9 +202,9 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     }
 
     public static SATIFSourceConfig parse(XContentParser xcp, String id, Long version) throws IOException {
-        if (id == null) {
-            id = NO_ID;
-        }
+//        if (id == null) {
+//            id = NO_ID;
+//        }
         if (version == null) {
             version = NO_VERSION;
         }
@@ -223,13 +224,13 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
         Boolean isEnabled = null;
         Map<String,Object> iocMapStore = null;
 
-//        xcp.nextToken();
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.currentToken(), xcp);
         while (xcp.nextToken() != XContentParser.Token.END_OBJECT) {
             String fieldName = xcp.currentName();
             xcp.nextToken();
-
             switch (fieldName) {
+                case FEED_SOURCE_CONFIG_FIELD:
+                    break;
                 case FEED_NAME_FIELD:
                     feedName = xcp.text();
                     break;
@@ -240,11 +241,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
                     feedType = toFeedType(xcp.text());
                     break;
                 case CREATED_BY_USER_FIELD:
-                    if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
-                        createdByUser = null;
-                    } else {
-                        createdByUser = xcp.text();
-                    }
+                    createdByUser = xcp.text();
                     break;
                 case CREATED_AT_FIELD:
                     if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
@@ -314,9 +311,12 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
                     isEnabled = xcp.booleanValue();
                     break;
                 case IOC_MAP_STORE_FIELD:
-                    iocMapStore = xcp.map();
+                    if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
+                        iocMapStore = null;
+                    } else {
+                        iocMapStore = xcp.map();
+                    }
                     break;
-
                 default:
                     xcp.skipChildren();
             }
@@ -372,11 +372,11 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     }
 
     // Getters and Setters
-    public String getId() {
-        return id;
+    public String getFeed_id() {
+        return feed_id;
     }
-    public void setId(String id) {
-        this.id = id;
+    public void setFeed_id(String feed_id) {
+        this.feed_id = feed_id;
     }
     public Long getVersion() {
         return version;

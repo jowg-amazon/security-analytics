@@ -90,7 +90,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
 
     private void retrieveLockAndCreateTIFConfig(SAIndexTIFSourceConfigRequest request, ActionListener<SAIndexTIFSourceConfigResponse> listener) {
         try {
-            lockService.acquireLock(request.getTIFConfigDto().getId(), LOCK_DURATION_IN_SECONDS, ActionListener.wrap(lock -> {
+            lockService.acquireLock(request.getTIFConfigDto().getFeed_id(), LOCK_DURATION_IN_SECONDS, ActionListener.wrap(lock -> {
                 if (lock == null) {
                     listener.onFailure(
                             new ConcurrentModificationException("another processor is holding a lock on the resource. Try again later")
@@ -99,6 +99,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                     return;
                 }
                 try {
+                    log.info("hhh retrieve lock and create tif config");
                     SATIFSourceConfigDto satifConfigDto = request.getTIFConfigDto();
 //                    satifConfigDto.setCreatedByUser(readUserFromThreadContext(threadPool).getName()); // thread pool is null
 
@@ -107,7 +108,8 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                             @Override
                             public void onResponse(SATIFSourceConfig satifSourceConfig) {
                                 SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(satifSourceConfig);
-                                listener.onResponse(new SAIndexTIFSourceConfigResponse(satifSourceConfigDto.getId(), satifSourceConfigDto.getVersion(), RestStatus.OK, satifSourceConfigDto));
+                                log.info("hhh the feed id", satifSourceConfigDto.getFeed_id() );
+                                listener.onResponse(new SAIndexTIFSourceConfigResponse(satifSourceConfigDto.getFeed_id(), satifSourceConfigDto.getVersion(), RestStatus.OK, satifSourceConfigDto));
                             }
                             @Override
                             public void onFailure(Exception e) {

@@ -11,9 +11,9 @@ import java.util.Map;
  * Threat intel config interface
  */
 public interface TIFSourceConfig {
-    String getId();
+    String getFeed_id();
 
-    void setId(String id);
+    void setFeed_id(String feed_id);
 
     Long getVersion();
 

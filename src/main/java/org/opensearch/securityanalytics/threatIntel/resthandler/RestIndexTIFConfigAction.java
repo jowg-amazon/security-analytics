@@ -56,12 +56,13 @@ public class RestIndexTIFConfigAction extends BaseRestHandler {
             refreshPolicy = WriteRequest.RefreshPolicy.parse(request.param(RestHandlerUtils.REFRESH));
         }
 
-        String id = request.param("id", NO_ID);
+        String id = request.param("feed_id", null);
 
         XContentParser xcp = request.contentParser();
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
 
         SATIFSourceConfigDto tifConfig = SATIFSourceConfigDto.parse(xcp, id, null);
+        // I can probably set the schedule time here?
         tifConfig.setLastUpdateTime(Instant.now());
 
         SAIndexTIFSourceConfigRequest indexTIFConfigRequest = new SAIndexTIFSourceConfigRequest(id, refreshPolicy, request.method(), tifConfig);

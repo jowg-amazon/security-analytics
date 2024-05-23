@@ -2,16 +2,12 @@
   "_meta" : {
     "schema_version": 2
   },
+  "dynamic": "strict",
   "properties": {
     "feed_source_config": {
       "properties": {
-        "id": {
-          "type" : "text",
-          "fields" : {
-            "keyword" : {
-              "type" : "keyword"
-            }
-          }
+        "feed_id": {
+          "type": "text"
         },
         "version": {
           "type": "long"
@@ -100,6 +96,9 @@
         },
         "enabled": {
           "type": "boolean"
+        },
+        "ioc_map_store": {
+          "type": "object"
         }
       }
     },

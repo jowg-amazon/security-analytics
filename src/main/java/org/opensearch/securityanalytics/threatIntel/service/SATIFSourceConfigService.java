@@ -3,19 +3,15 @@ package org.opensearch.securityanalytics.threatIntel.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.action.StepListener;
-import org.opensearch.action.support.master.AcknowledgedResponse;
-import org.opensearch.client.Client;
 import org.opensearch.common.inject.Inject;
-import org.opensearch.common.settings.Settings;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.jobscheduler.spi.LockModel;
-import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
+import org.opensearch.securityanalytics.threatIntel.common.TIFJobState;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.dao.SATIFSourceConfigDao;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
-import org.opensearch.threadpool.ThreadPool;
 
 /**
  * Service class for threat intel feed config
@@ -52,16 +48,24 @@ public class SATIFSourceConfigService {
             final TimeValue indexTimeout,
             final ActionListener<SATIFSourceConfig> listener
     ) {
+        log.info("hhh create index and save tif config");
         StepListener<Void> createIndexStepListener = new StepListener<>();
         createIndexStepListener.whenComplete(v -> {
             try {
-                SATIFSourceConfig satifConfig = convertToSATIFConfig(satifConfigDto);
-                satifConfigDao.indexTIFSourceConfig(satifConfig, indexTimeout, new ActionListener<>() {
+                log.error("before converting", satifConfigDto.getFeed_id());
+
+                SATIFSourceConfig satifSourceConfig = convertToSATIFConfig(satifConfigDto);
+                satifSourceConfig.setState(TIFJobState.AVAILABLE);
+                satifConfigDao.indexTIFSourceConfig(satifSourceConfig, indexTimeout, new ActionListener<>() {
                     @Override
-                    public void onResponse(SATIFSourceConfig satifSourceConfig) {
-                        satifConfig.setId(satifSourceConfig.getId());
-                        satifConfig.setVersion(satifSourceConfig.getVersion());
-                        listener.onResponse(satifConfig);
+                    public void onResponse(SATIFSourceConfig response) {
+
+                        log.info("hhh create index and save config on response");
+                        log.info("hhh feed id 1", response.getName());
+                        satifSourceConfig.setFeed_id(response.getFeed_id());
+                        satifSourceConfig.setVersion(response.getVersion());
+                        log.info("hhh feed id 1", satifSourceConfig.getFeed_id());
+                        listener.onResponse(satifSourceConfig);
                     }
                     @Override
                     public void onFailure(Exception e) {
@@ -83,8 +87,10 @@ public class SATIFSourceConfigService {
 
     public SATIFSourceConfig convertToSATIFConfig(SATIFSourceConfigDto satifConfigDto) {
         // might need to do additional configuration
+        log.error("converting", satifConfigDto.getFeed_id());
+
         SATIFSourceConfig satifConfig = new SATIFSourceConfig(
-                satifConfigDto.getId(), // set in DTO
+                satifConfigDto.getFeed_id(), // set in DTO
                 satifConfigDto.getVersion(), // set in DTO
                 satifConfigDto.getName(), // comes from request
                 satifConfigDto.getFeedFormat(), // comes from request

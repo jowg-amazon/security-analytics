@@ -11,13 +11,11 @@ import org.opensearch.OpenSearchException;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.ResourceAlreadyExistsException;
 import org.opensearch.ResourceNotFoundException;
-import org.opensearch.action.ActionRunnable;
 import org.opensearch.action.DocWriteRequest;
 import org.opensearch.action.StepListener;
 import org.opensearch.action.admin.indices.create.CreateIndexRequest;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
 import org.opensearch.action.delete.DeleteResponse;
-import org.opensearch.action.get.GetRequest;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.support.WriteRequest;
@@ -27,24 +25,13 @@ import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.settings.ClusterSettings;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.unit.TimeValue;
-import org.opensearch.common.xcontent.LoggingDeprecationHandler;
 import org.opensearch.common.xcontent.XContentFactory;
-import org.opensearch.common.xcontent.XContentHelper;
-import org.opensearch.commons.alerting.action.DeleteMonitorResponse;
-import org.opensearch.commons.alerting.action.DeleteWorkflowResponse;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.rest.RestStatus;
-import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.core.xcontent.ToXContent;
-import org.opensearch.core.xcontent.XContentParser;
-import org.opensearch.rest.RestRequest;
 import org.opensearch.securityanalytics.SecurityAnalyticsPlugin;
-import org.opensearch.securityanalytics.action.IndexDetectorResponse;
-import org.opensearch.securityanalytics.logtype.LogTypeService;
-import org.opensearch.securityanalytics.model.Detector;
 import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigRequest;
-import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigResponse;
 import org.opensearch.securityanalytics.threatIntel.action.ThreatIntelIndicesResponse;
 import org.opensearch.securityanalytics.threatIntel.common.StashedThreadContext;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
@@ -52,7 +39,6 @@ import org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConf
 import org.opensearch.securityanalytics.util.SecurityAnalyticsException;
 import org.opensearch.threadpool.ThreadPool;
 
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,9 +46,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -85,15 +69,22 @@ public class SATIFSourceConfigDao {
 
     public void indexTIFSourceConfig(SATIFSourceConfig satifSourceConfig, TimeValue indexTimeout, final ActionListener<SATIFSourceConfig> actionListener) throws Exception {
         IndexRequest indexRequest = new IndexRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
+                .id(satifSourceConfig.getFeed_id())
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .source(satifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
                 .timeout(indexTimeout);
-        log.debug("Indexing tif source config");
+        log.info("hhh Indexing tif source config");
         client.index(indexRequest, new ActionListener<>() {
             @Override
             public void onResponse(IndexResponse response) {
-                log.debug("TIF source config indexed success.");
-                satifSourceConfig.setId(response.getId());
+                if (response.status() == RestStatus.CREATED) {
+                    log.info("FIAELD IN HERE");
+                    log.info("what is the id", response.status().toString());
+                }
+                log.info("hhh TIF source config indexed success.");
+                satifSourceConfig.setFeed_id(response.getId());
+                log.info("hhh responseID", response.getId());
+
                 actionListener.onResponse(satifSourceConfig);
             }
             @Override
@@ -210,7 +201,7 @@ public class SATIFSourceConfigDao {
         StashedThreadContext.run(client, () -> {
             try {
                 client.prepareIndex(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
-                        .setId(satifConfig.getId())
+                        .setId(satifConfig.getFeed_id())
                         .setOpType(DocWriteRequest.OpType.CREATE)
                         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                         .setSource(satifConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS));
@@ -322,7 +313,7 @@ public class SATIFSourceConfigDao {
         StashedThreadContext.run(client, () -> {
             try {
                 client.prepareIndex(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
-                        .setId(satifConfig.getId())
+                        .setId(satifConfig.getFeed_id())
                         .setOpType(DocWriteRequest.OpType.INDEX)
                         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                         .setSource(satifConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
@@ -363,7 +354,7 @@ public class SATIFSourceConfigDao {
     public void deleteTIFConfig(final SATIFSourceConfig satifConfig) {
         DeleteResponse response = client.prepareDelete()
                 .setIndex(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
-                .setId(satifConfig.getId())
+                .setId(satifConfig.getFeed_id())
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .execute()
                 .actionGet(clusterSettings.get(SecurityAnalyticsSettings.THREAT_INTEL_TIMEOUT));

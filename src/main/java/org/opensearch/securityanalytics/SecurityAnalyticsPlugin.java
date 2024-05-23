@@ -65,6 +65,7 @@ import org.opensearch.securityanalytics.model.ThreatIntelFeedData;
 import org.opensearch.securityanalytics.resthandler.*;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.dao.SATIFSourceConfigDao;
+import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestIndexTIFConfigAction;
 import org.opensearch.securityanalytics.threatIntel.service.DetectorThreatIntelService;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
@@ -245,7 +246,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
 
     @Override
     public ScheduledJobParser getJobParser() {
-        return (parser, id, jobDocVersion) -> TIFJobParameter.PARSER.parse(parser, null);
+        return (parser, id, jobDocVersion) -> SATIFSourceConfig.parse(parser, null, null);
     }
 
     @Override

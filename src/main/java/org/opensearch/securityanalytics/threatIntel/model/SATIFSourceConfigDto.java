@@ -10,6 +10,7 @@ package org.opensearch.securityanalytics.threatIntel.model;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.opensearch.common.UUIDs;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.common.io.stream.Writeable;
@@ -40,7 +41,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
     public static final String FEED_SOURCE_CONFIG_FIELD = "feed_source_config";
 
     public static final String NO_ID = "";
-    public static final String ID_FIELD = "id";
+    public static final String ID_FIELD = "feed_id";
 
     public static final Long NO_VERSION = 1L;
     public static final String VERSION_FIELD = "version";
@@ -60,7 +61,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
     public static final String ENABLED_FIELD = "enabled";
     public static final String IOC_MAP_STORE_FIELD = "ioc_map_store";
 
-    private String id;
+    private String feed_id;
     private Long version;
     private String feedName;
     private String feedFormat;
@@ -80,7 +81,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
     private Map<String, Object> iocMapStore;
 
     public SATIFSourceConfigDto(SATIFSourceConfig saTIFSourceConfig) {
-        this.id = saTIFSourceConfig.getId();
+        this.feed_id = saTIFSourceConfig.getFeed_id();
         this.version = saTIFSourceConfig.getVersion();
         this.feedName = saTIFSourceConfig.getName();
         this.feedFormat = saTIFSourceConfig.getFeedFormat();
@@ -98,10 +99,12 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
         this.iocMapStore = saTIFSourceConfig.getIocMapStore();
     }
 
-    public SATIFSourceConfigDto(String id, Long version, String feedName, String feedFormat, FeedType feedType, String createdByUser, Instant createdAt,
+    public SATIFSourceConfigDto(String feed_id, Long version, String feedName, String feedFormat, FeedType feedType, String createdByUser, Instant createdAt,
                                 Instant enabledTime, Instant lastUpdateTime, Schedule schedule, TIFJobState state, String refreshType, Instant lastRefreshedTime, String lastRefreshedUser,
                                 Boolean isEnabled, Map<String, Object> iocMapStore) {
-        this.id = id != null ? id : NO_ID;
+        log.error("i am here");
+        this.feed_id = feed_id == null ? UUIDs.base64UUID() : feed_id;
+        log.error(this.feed_id);
         this.version = version != null ? version : NO_VERSION;
         this.feedName = feedName;
         this.feedFormat = feedFormat;
@@ -134,7 +137,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
     }
 
     public void writeTo(final StreamOutput out) throws IOException {
-        out.writeString(id);
+        out.writeString(feed_id);
         out.writeLong(version);
         out.writeString(feedName);
         out.writeString(feedFormat);
@@ -154,16 +157,14 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
 
     @Override
     public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
-
         builder.startObject()
                 .startObject(FEED_SOURCE_CONFIG_FIELD)
-                .field(ID_FIELD, id)
-                .field(VERSION_FIELD, version);
-
-        builder.field(FEED_NAME_FIELD, feedName);
-        builder.field(FEED_FORMAT_FIELD, feedFormat);
-        builder.field(FEED_TYPE_FIELD, feedType.name());
-        builder.field(CREATED_BY_USER_FIELD, createdByUser);
+                .field(ID_FIELD, feed_id)
+                .field(VERSION_FIELD, version)
+                .field(FEED_NAME_FIELD, feedName)
+                .field(FEED_FORMAT_FIELD, feedFormat)
+                .field(FEED_TYPE_FIELD, feedType.name())
+                .field(CREATED_BY_USER_FIELD, createdByUser);
 
         if (createdAt == null) {
             builder.nullField(CREATED_AT_FIELD);
@@ -201,9 +202,6 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
     }
 
     public static SATIFSourceConfigDto parse(XContentParser xcp, String id, Long version) throws IOException {
-        if (id == null) {
-            id = NO_ID;
-        }
         if (version == null) {
             version = NO_VERSION;
         }
@@ -221,7 +219,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
         Instant lastRefreshedTime = null;
         String lastRefreshedUser = null;
         Boolean isEnabled = null;
-        Map<String,Object> iocMapStore = new HashMap<>();
+        Map<String,Object> iocMapStore = null;
 
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.currentToken(), xcp);
         while (xcp.nextToken() != XContentParser.Token.END_OBJECT) {
@@ -283,7 +281,11 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
                     }
                     break;
                 case REFRESH_TYPE_FIELD:
-                    refreshType = xcp.text();
+                    if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
+                        refreshType = null;
+                    } else {
+                        refreshType = xcp.text();
+                    }
                     break;
                 case LAST_REFRESHED_TIME_FIELD:
                     if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
@@ -296,13 +298,21 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
                     }
                     break;
                 case LAST_REFRESHED_USER_FIELD:
-                    lastRefreshedUser = xcp.text();
+                    if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
+                        lastRefreshedUser = null;
+                    } else {
+                        lastRefreshedUser = xcp.text();
+                    }
                     break;
                 case ENABLED_FIELD:
                     isEnabled = xcp.booleanValue();
                     break;
                 case IOC_MAP_STORE_FIELD:
-                    iocMapStore = xcp.map();
+                    if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
+                        iocMapStore = null;
+                    } else {
+                        iocMapStore = xcp.map();
+                    }
                     break;
                 default:
                     xcp.skipChildren();
@@ -356,11 +366,11 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
 
 
     // Getters and Setters
-    public String getId() {
-        return id;
+    public String getFeed_id() {
+        return feed_id;
     }
-    public void setId(String id) {
-        this.id = id;
+    public void setFeed_id(String feed_id) {
+        this.feed_id = feed_id;
     }
     public Long getVersion() {
         return version;

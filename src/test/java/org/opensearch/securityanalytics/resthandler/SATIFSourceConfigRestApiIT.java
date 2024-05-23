@@ -52,23 +52,25 @@ import static org.opensearch.securityanalytics.TestHelpers.*;
 public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
     private static final Logger log = LogManager.getLogger(SATIFSourceConfigRestApiIT.class);
 
+    private String matchAllSearchBody = "{\"size\": 1000, \"query\" : {\"match_all\":{}}}";
+
     public void testCreateSATIFSourceConfig() throws IOException {
         Schedule schedule = new IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
         SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(
-                "12345",
-                1L,
+                null,
+                null,
                 "feedname",
                 "stix",
                 FeedType.CUSTOM,
-                "joanne",
-                Instant.now(),
-                Instant.now(),
-                Instant.now(),
+                "joanne", // how to set user needs to be changed
+                null,
+                null,
+                null,
                 schedule,
-                TIFJobState.CREATING,
-                "temp",
-                Instant.now(),
-                "joanne",
+                null,
+                null,
+                null,
+                null,
                 true,
                 null
         );
@@ -76,6 +78,12 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
         Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.TIF_CONFIG_URI, Collections.emptyMap(), toHttpEntity(satifSourceConfigDto));
         Assert.assertEquals(201, response.getStatusLine().getStatusCode());
         Map<String, Object> responseBody = asMap(response);
-    }
+        log.error("response");
+        log.error(responseBody);
 
+        List<SearchHit> hits = executeSearch(".opensearch-sap--job", matchAllSearchBody);
+        log.error("hits");
+        log.error(hits);
+        fail();
+    }
 }
