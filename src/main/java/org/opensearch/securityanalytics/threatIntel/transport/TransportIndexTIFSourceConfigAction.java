@@ -99,7 +99,6 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                     return;
                 }
                 try {
-                    log.info("hhh retrieve lock and create tif config");
                     SATIFSourceConfigDto satifConfigDto = request.getTIFConfigDto();
 //                    satifConfigDto.setCreatedByUser(readUserFromThreadContext(threadPool).getName()); // thread pool is null
 
@@ -108,7 +107,6 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                             @Override
                             public void onResponse(SATIFSourceConfig satifSourceConfig) {
                                 SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(satifSourceConfig);
-                                log.info("hhh the feed id", satifSourceConfigDto.getFeed_id() );
                                 listener.onResponse(new SAIndexTIFSourceConfigResponse(satifSourceConfigDto.getFeed_id(), satifSourceConfigDto.getVersion(), RestStatus.OK, satifSourceConfigDto));
                             }
                             @Override

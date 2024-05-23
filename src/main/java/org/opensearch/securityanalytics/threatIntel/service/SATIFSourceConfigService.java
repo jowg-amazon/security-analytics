@@ -48,23 +48,16 @@ public class SATIFSourceConfigService {
             final TimeValue indexTimeout,
             final ActionListener<SATIFSourceConfig> listener
     ) {
-        log.info("hhh create index and save tif config");
         StepListener<Void> createIndexStepListener = new StepListener<>();
         createIndexStepListener.whenComplete(v -> {
             try {
-                log.error("before converting", satifConfigDto.getFeed_id());
-
                 SATIFSourceConfig satifSourceConfig = convertToSATIFConfig(satifConfigDto);
                 satifSourceConfig.setState(TIFJobState.AVAILABLE);
                 satifConfigDao.indexTIFSourceConfig(satifSourceConfig, indexTimeout, new ActionListener<>() {
                     @Override
                     public void onResponse(SATIFSourceConfig response) {
-
-                        log.info("hhh create index and save config on response");
-                        log.info("hhh feed id 1", response.getName());
                         satifSourceConfig.setFeed_id(response.getFeed_id());
                         satifSourceConfig.setVersion(response.getVersion());
-                        log.info("hhh feed id 1", satifSourceConfig.getFeed_id());
                         listener.onResponse(satifSourceConfig);
                     }
                     @Override
@@ -87,8 +80,6 @@ public class SATIFSourceConfigService {
 
     public SATIFSourceConfig convertToSATIFConfig(SATIFSourceConfigDto satifConfigDto) {
         // might need to do additional configuration
-        log.error("converting", satifConfigDto.getFeed_id());
-
         SATIFSourceConfig satifConfig = new SATIFSourceConfig(
                 satifConfigDto.getFeed_id(), // set in DTO
                 satifConfigDto.getVersion(), // set in DTO

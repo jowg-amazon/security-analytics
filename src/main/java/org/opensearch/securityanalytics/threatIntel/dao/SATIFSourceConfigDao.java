@@ -73,18 +73,10 @@ public class SATIFSourceConfigDao {
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .source(satifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
                 .timeout(indexTimeout);
-        log.info("hhh Indexing tif source config");
+        log.debug("Indexing tif source config");
         client.index(indexRequest, new ActionListener<>() {
             @Override
             public void onResponse(IndexResponse response) {
-                if (response.status() == RestStatus.CREATED) {
-                    log.info("FIAELD IN HERE");
-                    log.info("what is the id", response.status().toString());
-                }
-                log.info("hhh TIF source config indexed success.");
-                satifSourceConfig.setFeed_id(response.getId());
-                log.info("hhh responseID", response.getId());
-
                 actionListener.onResponse(satifSourceConfig);
             }
             @Override
