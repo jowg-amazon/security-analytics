@@ -251,7 +251,11 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
                     feedType = toFeedType(xcp.text());
                     break;
                 case CREATED_BY_USER_FIELD:
-                    createdByUser = xcp.text();
+                    if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {
+                        createdByUser = null;
+                    } else {
+                        createdByUser = xcp.text();
+                    }
                     break;
                 case CREATED_AT_FIELD:
                     if (xcp.currentToken() == XContentParser.Token.VALUE_NULL) {

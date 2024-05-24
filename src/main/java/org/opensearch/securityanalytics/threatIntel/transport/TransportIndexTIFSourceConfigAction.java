@@ -84,10 +84,10 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
             return;
         }
 
-        retrieveLockAndCreateTIFConfig(request, listener);
+        retrieveLockAndCreateTIFConfig(request, listener, user);
     }
 
-    private void retrieveLockAndCreateTIFConfig(SAIndexTIFSourceConfigRequest request, ActionListener<SAIndexTIFSourceConfigResponse> listener) {
+    private void retrieveLockAndCreateTIFConfig(SAIndexTIFSourceConfigRequest request, ActionListener<SAIndexTIFSourceConfigResponse> listener, User user) {
         try {
             lockService.acquireLock(request.getTIFConfigDto().getFeed_id(), LOCK_DURATION_IN_SECONDS, ActionListener.wrap(lock -> {
                 if (lock == null) {
@@ -99,8 +99,9 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                 }
                 try {
                     SATIFSourceConfigDto satifConfigDto = request.getTIFConfigDto();
-//                    satifConfigDto.setCreatedByUser(readUserFromThreadContext(threadPool).getName()); // thread pool is null
-
+                    if (user != null) {
+                        satifConfigDto.setCreatedByUser(user.getName());
+                    }
                     try {
                         satifConfigService.createIndexAndSaveTIFConfig(satifConfigDto,
                                 lock,
