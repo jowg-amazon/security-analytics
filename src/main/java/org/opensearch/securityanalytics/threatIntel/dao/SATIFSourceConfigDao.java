@@ -29,12 +29,13 @@ import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.core.xcontent.ToXContent;
+import org.opensearch.jobscheduler.spi.LockModel;
 import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.securityanalytics.SecurityAnalyticsPlugin;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.common.StashedThreadContext;
+import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
-import org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigResponse;
 import org.opensearch.securityanalytics.util.SecurityAnalyticsException;
 import org.opensearch.threadpool.ThreadPool;
 
@@ -55,14 +56,68 @@ public class SATIFSourceConfigDao {
     private final ClusterSettings clusterSettings;
     private final ThreadPool threadPool;
     private final NamedXContentRegistry xContentRegistry;
+    private final TIFLockService lockService;
 
 
-    public SATIFSourceConfigDao(final Client client, final ClusterService clusterService, ThreadPool threadPool, NamedXContentRegistry xContentRegistry) {
+    public SATIFSourceConfigDao(final Client client, final ClusterService clusterService, ThreadPool threadPool, NamedXContentRegistry xContentRegistry, final TIFLockService lockService) {
         this.client = client;
         this.clusterService = clusterService;
         this.clusterSettings = clusterService.getClusterSettings();
         this.threadPool = threadPool;
         this.xContentRegistry = xContentRegistry;
+        this.lockService = lockService;
+
+    }
+
+    public void indexTIFSourceConfig(SATIFSourceConfig SaTifSourceConfig,
+                                     TimeValue indexTimeout,
+                                     final LockModel lock,
+                                     final ActionListener<SATIFSourceConfig> actionListener) {
+        StepListener<Void> createIndexStepListener = new StepListener<>();
+        createIndexStepListener.whenComplete(v -> {
+            try {
+                IndexRequest indexRequest = new IndexRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
+                        .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
+                        .source(SaTifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
+                        .timeout(indexTimeout);
+                log.debug("Indexing tif source config");
+                client.index(indexRequest, ActionListener.wrap(response -> {
+                    log.debug("Threat intel source config with id [{}] indexed success.", response.getId());
+                    SATIFSourceConfig responseSaTifSourceConfig = createSATIFSourceConfig(SaTifSourceConfig, response);
+                    actionListener.onResponse(responseSaTifSourceConfig);
+                }, actionListener::onFailure));
+            } catch (Exception e) {
+                log.error("Exception saving the threat intel source config in index", e);
+                actionListener.onFailure(e);
+            }
+        }, exception -> {
+            lockService.releaseLock(lock);
+            log.error("failed to release lock", exception);
+            actionListener.onFailure(exception);
+        });
+        createJobIndexIfNotExists(createIndexStepListener);
+    }
+
+    private static SATIFSourceConfig createSATIFSourceConfig(SATIFSourceConfig SaTifSourceConfig, IndexResponse response) {
+        return new SATIFSourceConfig(
+                response.getId(),
+                SaTifSourceConfig.getVersion(),
+                SaTifSourceConfig.getName(),
+                SaTifSourceConfig.getFeedFormat(),
+                SaTifSourceConfig.getFeedType(),
+                SaTifSourceConfig.getCreatedByUser(),
+                SaTifSourceConfig.getCreatedAt(),
+                SaTifSourceConfig.getEnabledTime(),
+                SaTifSourceConfig.getLastUpdateTime(),
+                SaTifSourceConfig.getSchedule(),
+                SaTifSourceConfig.getState(),
+                SaTifSourceConfig.getRefreshType(),
+                SaTifSourceConfig.getLastRefreshedTime(),
+                SaTifSourceConfig.getLastRefreshedUser(),
+                SaTifSourceConfig.isEnabled(),
+                SaTifSourceConfig.getIocMapStore(),
+                SaTifSourceConfig.getIocTypes()
+        );
     }
 
     // Get the job config index mapping
@@ -74,8 +129,8 @@ public class SATIFSourceConfigDao {
                 }
             }
         } catch (IOException e) {
-            log.error("Runtime exception when getting the threat intel index mapping", e);
-            throw new SecurityAnalyticsException("Runtime exception when getting the threat intel index mapping", RestStatus.INTERNAL_SERVER_ERROR, e);
+            log.error("Failed to get the threat intel index mapping", e);
+            throw new SecurityAnalyticsException("Failed to get threat intel index mapping", RestStatus.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -108,35 +163,12 @@ public class SATIFSourceConfigDao {
                     stepListener.onResponse(null);
                     return;
                 }
-                log.error("Failed to create security analytics threat intel job index", e);
+                log.error("Failed to create [{}] index", SecurityAnalyticsPlugin.JOB_INDEX_NAME, e);
                 stepListener.onFailure(e);
             }
         }));
     }
 
-    // Index TIF Source config
-    public void indexTIFSourceConfig(SATIFSourceConfig satifSourceConfig,
-                                     TimeValue indexTimeout,
-                                     WriteRequest.RefreshPolicy refreshPolicy,
-                                     final ActionListener<SATIFSourceConfig> actionListener) throws Exception {
-        IndexRequest indexRequest = new IndexRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME)
-                .setRefreshPolicy(refreshPolicy)
-                .source(satifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS))
-                .timeout(indexTimeout);
-        log.debug("Indexing tif source config");
-        client.index(indexRequest, new ActionListener<>() {
-            @Override
-            public void onResponse(IndexResponse response) {
-                log.debug("TIF source config indexed success.");
-                satifSourceConfig.setId(response.getId());
-                actionListener.onResponse(satifSourceConfig);
-            }
-            @Override
-            public void onFailure(Exception e) {
-                throw new SecurityAnalyticsException("Exception saving the tif source config in index", RestStatus.INTERNAL_SERVER_ERROR, e);
-            }
-        });
-    }
 
     // Get TIF source config
     public void getTIFSourceConfig(
@@ -173,18 +205,6 @@ public class SATIFSourceConfigDao {
                 actionListener.onFailure(e);
             }
         });
-    }
-
-
-
-
-
-
-
-
-    // Common utils interface class
-    IndexTIFSourceConfigResponse indexTIFConfig(SAIndexTIFSourceConfigRequest request, ActionListener <SAIndexTIFSourceConfigRequest> listener) {
-        return null;
     }
 
 }

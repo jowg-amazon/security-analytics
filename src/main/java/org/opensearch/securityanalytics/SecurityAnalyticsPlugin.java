@@ -69,8 +69,8 @@ import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigA
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.dao.SATIFSourceConfigDao;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
-import org.opensearch.securityanalytics.threatIntel.resthandler.RestGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestIndexTIFSourceConfigAction;
+import org.opensearch.securityanalytics.threatIntel.resthandler.RestGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.service.DetectorThreatIntelService;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
 import org.opensearch.securityanalytics.threatIntel.service.ThreatIntelFeedDataService;
@@ -114,8 +114,8 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
     public static final String FINDINGS_CORRELATE_URI = FINDINGS_BASE_URI + "/correlate";
     public static final String LIST_CORRELATIONS_URI = PLUGINS_BASE_URI + "/correlations";
     public static final String CORRELATION_RULES_BASE_URI = PLUGINS_BASE_URI + "/correlation/rules";
-    public static final String TIF_BASE_URI = PLUGINS_BASE_URI + "/tif";
-    public static final String TIF_SOURCE_CONFIG_URI = PLUGINS_BASE_URI + "/tif/source";
+    public static final String THREAT_INTEL_BASE_URI = PLUGINS_BASE_URI + "/threat_intel";
+    public static final String THREAT_INTEL_SOURCE_URI = PLUGINS_BASE_URI + "/threat_intel/source";
     public static final String CUSTOM_LOG_TYPE_URI = PLUGINS_BASE_URI + "/logtype";
     public static final String JOB_INDEX_NAME = ".opensearch-sap--job";
     public static final String JOB_TYPE = "opensearch_sap_job";
@@ -144,7 +144,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
 
     private LogTypeService logTypeService;
 
-    private SATIFSourceConfigDao satifSourceConfigDao;
+    private SATIFSourceConfigDao SaTifSourceConfigDao;
 
     @Override
     public Collection<SystemIndexDescriptor> getSystemIndexDescriptors(Settings settings){
@@ -182,8 +182,8 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
         TIFJobParameterService tifJobParameterService = new TIFJobParameterService(client, clusterService);
         TIFJobUpdateService tifJobUpdateService = new TIFJobUpdateService(clusterService, tifJobParameterService, threatIntelFeedDataService, builtInTIFMetadataLoader);
         TIFLockService threatIntelLockService = new TIFLockService(clusterService, client);
-        satifSourceConfigDao = new SATIFSourceConfigDao(client, clusterService, threadPool, xContentRegistry);
-        SATIFSourceConfigService satifSourceConfigService = new SATIFSourceConfigService(satifSourceConfigDao, threatIntelLockService);
+        SaTifSourceConfigDao = new SATIFSourceConfigDao(client, clusterService, threadPool, xContentRegistry, threatIntelLockService);
+        SATIFSourceConfigService SaTifSourceConfigService = new SATIFSourceConfigService(SaTifSourceConfigDao, threatIntelLockService);
 
 
         TIFJobRunner.getJobRunnerInstance().initialize(clusterService, tifJobUpdateService, tifJobParameterService, threatIntelLockService, threadPool, detectorThreatIntelService);
@@ -191,7 +191,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
         return List.of(
                 detectorIndices, correlationIndices, correlationRuleIndices, ruleTopicIndices, customLogTypeIndices, ruleIndices,
                 mapperService, indexTemplateManager, builtinLogTypeLoader, builtInTIFMetadataLoader, threatIntelFeedDataService, detectorThreatIntelService,
-                tifJobUpdateService, tifJobParameterService, threatIntelLockService, satifSourceConfigDao, satifSourceConfigService);
+                tifJobUpdateService, tifJobParameterService, threatIntelLockService, SaTifSourceConfigDao, SaTifSourceConfigService);
     }
 
     @Override
@@ -263,7 +263,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
                     case FEED_SOURCE_CONFIG_FIELD:
                         return SATIFSourceConfig.parse(xcp, id, null);
                     default:
-                        log.warn("Unsupported document was indexed");
+                        log.error("Job parser failed for [{}] in security analytics job registration", fieldName);
                         xcp.skipChildren();
                 }
             }

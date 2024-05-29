@@ -37,7 +37,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
         IntervalSchedule schedule = new IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
         List<String> iocTypes = List.of("ip", "dns");
 
-        SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(
+        SATIFSourceConfigDto SaTifSourceConfigDto = new SATIFSourceConfigDto(
                 null,
                 null,
                 feedName,
@@ -57,7 +57,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
                 iocTypes
         );
 
-        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI, Collections.emptyMap(), toHttpEntity(satifSourceConfigDto));
+        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI, Collections.emptyMap(), toHttpEntity(SaTifSourceConfigDto));
         Assert.assertEquals(201, response.getStatusLine().getStatusCode());
         Map<String, Object> responseBody = asMap(response);
 
@@ -66,7 +66,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
 
         int createdVersion = Integer.parseInt(responseBody.get("_version").toString());
         Assert.assertTrue("incorrect version", createdVersion > 0);
-        Assert.assertEquals("Incorrect Location header", String.format(Locale.getDefault(), "%s/%s", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI, createdId), response.getHeader("Location"));
+        Assert.assertEquals("Incorrect Location header", String.format(Locale.getDefault(), "%s/%s", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI, createdId), response.getHeader("Location"));
 
         String request = "{\n" +
                 "   \"query\" : {\n" +
