@@ -128,7 +128,6 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
         this.lastRefreshedUser = lastRefreshedUser;
         this.isEnabled = isEnabled;
         this.iocMapStore = iocMapStore != null ? iocMapStore : new HashMap<>();
-//        this.iocMapStore = (this.iocMapStore == null) ? new HashMap<>() : iocMapStore;
         this.iocTypes = iocTypes;
     }
 

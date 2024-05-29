@@ -76,7 +76,7 @@ public class SATIFSourceConfigService {
             final ActionListener<SATIFSourceConfig> listener
     ) {
         try {
-            satifSourceConfigDao.getTIFSourceConfig(satifSourceConfigId, version, new ActionListener<>() {
+            SaTifSourceConfigDao.getTIFSourceConfig(satifSourceConfigId, version, new ActionListener<>() {
                 @Override
                 public void onResponse(SATIFSourceConfig satifSourceConfig) {
                     listener.onResponse(satifSourceConfig);

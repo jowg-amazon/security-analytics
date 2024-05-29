@@ -32,7 +32,6 @@ import org.opensearch.core.xcontent.ToXContent;
 import org.opensearch.jobscheduler.spi.LockModel;
 import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.securityanalytics.SecurityAnalyticsPlugin;
-import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.common.StashedThreadContext;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;

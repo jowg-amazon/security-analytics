@@ -57,7 +57,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
                 iocTypes
         );
 
-        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI, Collections.emptyMap(), toHttpEntity(SaTifSourceConfigDto));
+        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI, Collections.emptyMap(), toHttpEntity(SaTifSourceConfigDto));
         Assert.assertEquals(201, response.getStatusLine().getStatusCode());
         Map<String, Object> responseBody = asMap(response);
 
@@ -105,14 +105,14 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
                 iocTypes
         );
 
-        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI, Collections.emptyMap(), toHttpEntity(satifSourceConfigDto));
+        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI, Collections.emptyMap(), toHttpEntity(satifSourceConfigDto));
         Assert.assertEquals(201, response.getStatusLine().getStatusCode());
         Map<String, Object> responseBody = asMap(response);
 
         String createdId = responseBody.get("_id").toString();
         Assert.assertNotEquals("response is missing Id", SATIFSourceConfigDto.NO_ID, createdId);
 
-        response = makeRequest(client(), "GET", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI + "/" + createdId, Collections.emptyMap(), null);
+        response = makeRequest(client(), "GET", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI + "/" + createdId, Collections.emptyMap(), null);
         Map<String, Object> getResponse = entityAsMap(response);
 
         String responseId = responseBody.get("_id").toString();

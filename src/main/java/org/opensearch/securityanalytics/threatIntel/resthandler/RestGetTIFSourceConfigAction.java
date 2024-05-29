@@ -29,7 +29,7 @@ public class RestGetTIFSourceConfigAction extends BaseRestHandler {
 
     @Override
     public List<Route> routes() {
-        return List.of(new Route(GET, String.format(Locale.getDefault(), "%s/{%s}", SecurityAnalyticsPlugin.TIF_SOURCE_CONFIG_URI, SAGetTIFSourceConfigRequest.TIF_SOURCE_CONFIG_ID)));
+        return List.of(new Route(GET, String.format(Locale.getDefault(), "%s/{%s}", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI, SAGetTIFSourceConfigRequest.TIF_SOURCE_CONFIG_ID)));
     }
 
     @Override
