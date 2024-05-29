@@ -63,7 +63,7 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
             actionListener.onFailure(new OpenSearchStatusException("Do not have permissions to resource", RestStatus.FORBIDDEN));
             return;
         }
-//        this.threadPool.getThreadContext().stashContext();
+
         SaTifConfigService.getTIFSourceConfig(request.getId(), request.getVersion(), new ActionListener<>() {
             @Override
             public void onResponse(SATIFSourceConfig SaTifSourceConfig) {

@@ -79,7 +79,6 @@ public class SATIFSourceConfigService {
             SaTifSourceConfigDao.getTIFSourceConfig(SaTifSourceConfigId, version, new ActionListener<>() {
                 @Override
                 public void onResponse(SATIFSourceConfig SaTifSourceConfig) {
-                    //TODO add logging here
                     listener.onResponse(SaTifSourceConfig);
                 }
                 @Override

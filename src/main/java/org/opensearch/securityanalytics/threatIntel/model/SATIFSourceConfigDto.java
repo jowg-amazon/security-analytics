@@ -20,6 +20,7 @@ import org.opensearch.core.xcontent.XContentParserUtils;
 import org.opensearch.jobscheduler.spi.schedule.IntervalSchedule;
 import org.opensearch.jobscheduler.spi.schedule.ScheduleParser;
 import org.opensearch.securityanalytics.threatIntel.common.FeedType;
+import org.opensearch.securityanalytics.threatIntel.common.RefreshType;
 import org.opensearch.securityanalytics.threatIntel.common.TIFJobState;
 import org.opensearch.securityanalytics.threatIntel.sacommons.TIFSourceConfigDto;
 
@@ -74,7 +75,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
     private Instant lastUpdateTime;
     private IntervalSchedule schedule;
     private TIFJobState state;
-    public String refreshType;
+    public RefreshType refreshType;
     public Instant lastRefreshedTime;
     public String lastRefreshedUser;
     private Boolean isEnabled;
@@ -123,7 +124,7 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
         this.lastUpdateTime = lastUpdateTime != null ? lastUpdateTime : Instant.now();
         this.schedule = schedule;
         this.state = state != null ? state : TIFJobState.CREATING;
-        this.refreshType = refreshType;
+        this.refreshType = refreshType != null ? refreshType : RefreshType.FULL;
         this.lastRefreshedTime = lastRefreshedTime;
         this.lastRefreshedUser = lastRefreshedUser;
         this.isEnabled = isEnabled;

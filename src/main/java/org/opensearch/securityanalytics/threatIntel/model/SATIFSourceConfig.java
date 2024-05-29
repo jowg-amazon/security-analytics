@@ -20,6 +20,7 @@ import org.opensearch.jobscheduler.spi.ScheduledJobParameter;
 import org.opensearch.jobscheduler.spi.schedule.IntervalSchedule;
 import org.opensearch.jobscheduler.spi.schedule.ScheduleParser;
 import org.opensearch.securityanalytics.threatIntel.common.FeedType;
+import org.opensearch.securityanalytics.threatIntel.common.RefreshType;
 import org.opensearch.securityanalytics.threatIntel.common.TIFJobState;
 import org.opensearch.securityanalytics.threatIntel.sacommons.TIFSourceConfig;
 
@@ -477,7 +478,7 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
     public void setLastRefreshedTime(Instant lastRefreshedTime) {
         this.lastRefreshedTime = lastRefreshedTime;
     }
-    public String getRefreshType() {
+    public RefreshType getRefreshType() {
         return refreshType;
     }
     public void setRefreshType(String refreshType) {

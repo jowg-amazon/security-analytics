@@ -198,6 +198,7 @@ public class SATIFSourceConfigDao {
                         SaTifSourceConfig = SATIFSourceConfig.docParse(xcp, response.getId(), response.getVersion());
                         assert SaTifSourceConfig != null;
                     }
+                    log.debug("Threat intel source config with id [{}] fetched.", response.getId());
                     actionListener.onResponse(SaTifSourceConfig);
                 } catch (IOException ex) {
                     actionListener.onFailure(ex);
