@@ -5,19 +5,16 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.support.ActionFilters;
 import org.opensearch.action.support.HandledTransportAction;
-import org.opensearch.client.Client;
 import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.commons.authuser.User;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.rest.RestStatus;
-import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigResponse;
-import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigResponse;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
@@ -26,9 +23,10 @@ import org.opensearch.tasks.Task;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.TransportService;
 
-import static org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigAction.GET_TIF_SOURCE_CONFIG_ACTION_NAME;
-
 public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SAGetTIFSourceConfigRequest, SAGetTIFSourceConfigResponse> implements SecureTransportAction {
+
+    private static final Logger log = LogManager.getLogger(TransportGetTIFSourceConfigAction.class);
+
     private final ClusterService clusterService;
 
     private final Settings settings;
@@ -37,9 +35,7 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
 
     private volatile Boolean filterByEnabled;
 
-    private final SATIFSourceConfigService satifConfigService;
-
-    private static final Logger log = LogManager.getLogger(TransportGetTIFSourceConfigAction.class);
+    private final SATIFSourceConfigService SaTifConfigService;
 
     @Inject
     public TransportGetTIFSourceConfigAction(TransportService transportService,
@@ -47,14 +43,14 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
                                              ClusterService clusterService,
                                              final ThreadPool threadPool,
                                              Settings settings,
-                                             final SATIFSourceConfigService satifConfigService) {
+                                             final SATIFSourceConfigService SaTifConfigService) {
         super(SAGetTIFSourceConfigAction.NAME, transportService, actionFilters, SAGetTIFSourceConfigRequest::new);
         this.clusterService = clusterService;
         this.threadPool = threadPool;
         this.settings = settings;
         this.filterByEnabled = SecurityAnalyticsSettings.FILTER_BY_BACKEND_ROLES.get(this.settings);
         this.clusterService.getClusterSettings().addSettingsUpdateConsumer(SecurityAnalyticsSettings.FILTER_BY_BACKEND_ROLES, this::setFilterByEnabled);
-        this.satifConfigService = satifConfigService;
+        this.SaTifConfigService = SaTifConfigService;
     }
 
     @Override
@@ -68,11 +64,11 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
             return;
         }
 //        this.threadPool.getThreadContext().stashContext();
-        satifConfigService.getTIFSourceConfig(request.getId(), request.getVersion(), new ActionListener<>() {
+        SaTifConfigService.getTIFSourceConfig(request.getId(), request.getVersion(), new ActionListener<>() {
             @Override
-            public void onResponse(SATIFSourceConfig satifSourceConfig) {
-                SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(satifSourceConfig);
-                actionListener.onResponse(new SAGetTIFSourceConfigResponse(satifSourceConfigDto.getId(), satifSourceConfigDto.getVersion(), RestStatus.OK, satifSourceConfigDto));
+            public void onResponse(SATIFSourceConfig SaTifSourceConfig) {
+                SATIFSourceConfigDto SaTifSourceConfigDto = new SATIFSourceConfigDto(SaTifSourceConfig);
+                actionListener.onResponse(new SAGetTIFSourceConfigResponse(SaTifSourceConfigDto.getId(), SaTifSourceConfigDto.getVersion(), RestStatus.OK, SaTifSourceConfigDto));
             }
 
             @Override

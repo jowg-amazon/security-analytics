@@ -71,15 +71,16 @@ public class SATIFSourceConfigService {
     }
 
     public void getTIFSourceConfig(
-            final String satifSourceConfigId,
+            final String SaTifSourceConfigId,
             final Long version,
             final ActionListener<SATIFSourceConfig> listener
     ) {
         try {
-            SaTifSourceConfigDao.getTIFSourceConfig(satifSourceConfigId, version, new ActionListener<>() {
+            SaTifSourceConfigDao.getTIFSourceConfig(SaTifSourceConfigId, version, new ActionListener<>() {
                 @Override
-                public void onResponse(SATIFSourceConfig satifSourceConfig) {
-                    listener.onResponse(satifSourceConfig);
+                public void onResponse(SATIFSourceConfig SaTifSourceConfig) {
+                    //TODO add logging here
+                    listener.onResponse(SaTifSourceConfig);
                 }
                 @Override
                 public void onFailure(Exception e) {

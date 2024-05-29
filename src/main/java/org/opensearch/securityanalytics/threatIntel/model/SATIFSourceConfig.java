@@ -207,12 +207,12 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.FIELD_NAME, xcp.nextToken(), xcp);
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
-        SATIFSourceConfig satifSourceConfig = parse(xcp, id, version);
+        SATIFSourceConfig SaTifSourceConfig = parse(xcp, id, version);
         XContentParserUtils.ensureExpectedToken(XContentParser.Token.END_OBJECT, xcp.nextToken(), xcp);
 
-        satifSourceConfig.setId(id);
-        satifSourceConfig.setVersion(version);
-        return satifSourceConfig;
+        SaTifSourceConfig.setId(id);
+        SaTifSourceConfig.setVersion(version);
+        return SaTifSourceConfig;
     }
 
     public static SATIFSourceConfig parse(XContentParser xcp, String id, Long version) throws IOException {

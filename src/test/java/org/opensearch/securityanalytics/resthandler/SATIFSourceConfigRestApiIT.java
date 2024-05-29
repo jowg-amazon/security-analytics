@@ -85,7 +85,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
         IntervalSchedule schedule = new IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
         List<String> iocTypes = List.of("ip", "dns");
 
-        SATIFSourceConfigDto satifSourceConfigDto = new SATIFSourceConfigDto(
+        SATIFSourceConfigDto SaTifSourceConfigDto = new SATIFSourceConfigDto(
                 null,
                 null,
                 feedName,
@@ -105,7 +105,7 @@ public class SATIFSourceConfigRestApiIT extends SecurityAnalyticsRestTestCase {
                 iocTypes
         );
 
-        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI, Collections.emptyMap(), toHttpEntity(satifSourceConfigDto));
+        Response response = makeRequest(client(), "POST", SecurityAnalyticsPlugin.THREAT_INTEL_SOURCE_URI, Collections.emptyMap(), toHttpEntity(SaTifSourceConfigDto));
         Assert.assertEquals(201, response.getStatusLine().getStatusCode());
         Map<String, Object> responseBody = asMap(response);
 

@@ -58,7 +58,12 @@ public class SATIFSourceConfigDao {
     private final TIFLockService lockService;
 
 
-    public SATIFSourceConfigDao(final Client client, final ClusterService clusterService, ThreadPool threadPool, NamedXContentRegistry xContentRegistry, final TIFLockService lockService) {
+    public SATIFSourceConfigDao(final Client client,
+                                final ClusterService clusterService,
+                                ThreadPool threadPool,
+                                NamedXContentRegistry xContentRegistry,
+                                final TIFLockService lockService)
+    {
         this.client = client;
         this.clusterService = clusterService;
         this.clusterSettings = clusterService.getClusterSettings();
@@ -173,9 +178,9 @@ public class SATIFSourceConfigDao {
     public void getTIFSourceConfig(
             String tifSourceConfigId,
             Long version,
-            ActionListener<SATIFSourceConfig> actionListener) throws Exception {
-        GetRequest getRequest = new GetRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME, tifSourceConfigId)
-                .version(version);
+            ActionListener<SATIFSourceConfig> actionListener)
+    {
+        GetRequest getRequest = new GetRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME, tifSourceConfigId).version(version);
         client.get(getRequest, new ActionListener<>() {
             @Override
             public void onResponse(GetResponse response) {
@@ -184,16 +189,16 @@ public class SATIFSourceConfigDao {
                         actionListener.onFailure(SecurityAnalyticsException.wrap(new OpenSearchStatusException("TIF Source Config not found.", RestStatus.NOT_FOUND)));
                         return;
                     }
-                    SATIFSourceConfig satifSourceConfig = null;
+                    SATIFSourceConfig SaTifSourceConfig = null;
                     if (!response.isSourceEmpty()) {
                         XContentParser xcp = XContentHelper.createParser(
                                 xContentRegistry, LoggingDeprecationHandler.INSTANCE,
                                 response.getSourceAsBytesRef(), XContentType.JSON
                         );
-                        satifSourceConfig = SATIFSourceConfig.docParse(xcp, response.getId(), response.getVersion());
-                        assert satifSourceConfig != null;
+                        SaTifSourceConfig = SATIFSourceConfig.docParse(xcp, response.getId(), response.getVersion());
+                        assert SaTifSourceConfig != null;
                     }
-                    actionListener.onResponse(satifSourceConfig);
+                    actionListener.onResponse(SaTifSourceConfig);
                 } catch (IOException ex) {
                     actionListener.onFailure(ex);
                 }

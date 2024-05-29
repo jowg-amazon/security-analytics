@@ -10,11 +10,7 @@ import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.core.xcontent.ToXContentObject;
 import org.opensearch.core.xcontent.XContentBuilder;
-import org.opensearch.securityanalytics.model.Detector;
-import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
-import org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigResponse;
-import org.opensearch.securityanalytics.threatIntel.sacommons.TIFSourceConfigDto;
 
 import java.io.IOException;
 
@@ -28,15 +24,15 @@ public class SAGetTIFSourceConfigResponse extends ActionResponse implements ToXC
 
     private final RestStatus status;
 
-    private final SATIFSourceConfigDto satifSourceConfigDto;
+    private final SATIFSourceConfigDto SaTifSourceConfigDto;
 
 
-    public SAGetTIFSourceConfigResponse(String id, Long version, RestStatus status, SATIFSourceConfigDto satifSourceConfigDto) {
+    public SAGetTIFSourceConfigResponse(String id, Long version, RestStatus status, SATIFSourceConfigDto SaTifSourceConfigDto) {
         super();
         this.id = id;
         this.version = version;
         this.status = status;
-        this.satifSourceConfigDto = satifSourceConfigDto;
+        this.SaTifSourceConfigDto = SaTifSourceConfigDto;
     }
 
     public SAGetTIFSourceConfigResponse(StreamInput sin) throws IOException {
@@ -53,9 +49,9 @@ public class SAGetTIFSourceConfigResponse extends ActionResponse implements ToXC
         out.writeString(id);
         out.writeLong(version);
         out.writeEnum(status);
-        if (satifSourceConfigDto != null) {
+        if (SaTifSourceConfigDto != null) {
             out.writeBoolean((true));
-            satifSourceConfigDto.writeTo(out);
+            SaTifSourceConfigDto.writeTo(out);
         } else {
             out.writeBoolean(false);
         }
@@ -67,17 +63,17 @@ public class SAGetTIFSourceConfigResponse extends ActionResponse implements ToXC
                 .field(_ID, id)
                 .field(_VERSION, version);
         builder.startObject("tif_config")
-                .field(SATIFSourceConfigDto.FEED_NAME_FIELD, satifSourceConfigDto.getName())
-                .field(SATIFSourceConfigDto.FEED_FORMAT_FIELD, satifSourceConfigDto.getFeedFormat())
-                .field(SATIFSourceConfigDto.FEED_TYPE_FIELD, satifSourceConfigDto.getFeedType())
-                .field(SATIFSourceConfigDto.STATE_FIELD, satifSourceConfigDto.getState())
-                .field(SATIFSourceConfigDto.ENABLED_TIME_FIELD, satifSourceConfigDto.getEnabledTime())
-                .field(SATIFSourceConfigDto.ENABLED_FIELD, satifSourceConfigDto.isEnabled())
-                .field(SATIFSourceConfigDto.LAST_REFRESHED_TIME_FIELD, satifSourceConfigDto.getLastRefreshedTime())
-                .field(SATIFSourceConfigDto.SCHEDULE_FIELD, satifSourceConfigDto.getSchedule())
+                .field(SATIFSourceConfigDto.FEED_NAME_FIELD, SaTifSourceConfigDto.getName())
+                .field(SATIFSourceConfigDto.FEED_FORMAT_FIELD, SaTifSourceConfigDto.getFeedFormat())
+                .field(SATIFSourceConfigDto.FEED_TYPE_FIELD, SaTifSourceConfigDto.getFeedType())
+                .field(SATIFSourceConfigDto.STATE_FIELD, SaTifSourceConfigDto.getState())
+                .field(SATIFSourceConfigDto.ENABLED_TIME_FIELD, SaTifSourceConfigDto.getEnabledTime())
+                .field(SATIFSourceConfigDto.ENABLED_FIELD, SaTifSourceConfigDto.isEnabled())
+                .field(SATIFSourceConfigDto.LAST_REFRESHED_TIME_FIELD, SaTifSourceConfigDto.getLastRefreshedTime())
+                .field(SATIFSourceConfigDto.SCHEDULE_FIELD, SaTifSourceConfigDto.getSchedule())
                 // source
-                .field(SATIFSourceConfigDto.CREATED_BY_USER_FIELD, satifSourceConfigDto.getCreatedByUser())
-                .field(SATIFSourceConfigDto.IOC_TYPES_FIELD, satifSourceConfigDto.getIocTypes())
+                .field(SATIFSourceConfigDto.CREATED_BY_USER_FIELD, SaTifSourceConfigDto.getCreatedByUser())
+                .field(SATIFSourceConfigDto.IOC_TYPES_FIELD, SaTifSourceConfigDto.getIocTypes())
                 .endObject();
         return builder.endObject();
     }
@@ -95,6 +91,6 @@ public class SAGetTIFSourceConfigResponse extends ActionResponse implements ToXC
     }
 
     public SATIFSourceConfigDto getDetector() {
-        return satifSourceConfigDto;
+        return SaTifSourceConfigDto;
     }
 }
