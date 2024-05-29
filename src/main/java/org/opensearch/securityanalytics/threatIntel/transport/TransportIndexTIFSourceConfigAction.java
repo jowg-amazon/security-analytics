@@ -17,6 +17,7 @@ import org.opensearch.commons.authuser.User;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
+import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigResponse;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
@@ -63,7 +64,7 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
             final TIFLockService lockService,
             final Settings settings
     ) {
-        super(INDEX_TIF_SOURCE_CONFIG_ACTION_NAME, transportService, actionFilters, SAIndexTIFSourceConfigRequest::new);
+        super(SAIndexTIFSourceConfigAction.NAME, transportService, actionFilters, SAIndexTIFSourceConfigRequest::new);
         this.threadPool = threadPool;
         this.satifConfigService = satifConfigService;
         this.lockService = lockService;

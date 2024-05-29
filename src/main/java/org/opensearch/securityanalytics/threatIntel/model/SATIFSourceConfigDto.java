@@ -122,14 +122,13 @@ public class SATIFSourceConfigDto implements Writeable, ToXContentObject, TIFSou
 
         this.lastUpdateTime = lastUpdateTime != null ? lastUpdateTime : Instant.now();
         this.schedule = schedule;
-
-        this.state = (this.state == null) ? TIFJobState.CREATING : state;
-
+        this.state = state != null ? state : TIFJobState.CREATING;
         this.refreshType = refreshType;
         this.lastRefreshedTime = lastRefreshedTime;
         this.lastRefreshedUser = lastRefreshedUser;
         this.isEnabled = isEnabled;
-        this.iocMapStore = (this.iocMapStore == null) ? new HashMap<>() : iocMapStore;
+        this.iocMapStore = iocMapStore != null ? iocMapStore : new HashMap<>();
+//        this.iocMapStore = (this.iocMapStore == null) ? new HashMap<>() : iocMapStore;
         this.iocTypes = iocTypes;
     }
 

@@ -26,6 +26,7 @@ import org.opensearch.securityanalytics.threatIntel.sacommons.TIFSourceConfig;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -105,14 +106,12 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
 
         this.lastUpdateTime = lastUpdateTime != null ? lastUpdateTime : Instant.now();
         this.schedule = schedule;
-
-        this.state = (this.state == null) ? TIFJobState.CREATING : state;
-
+        this.state = state != null ? state : TIFJobState.CREATING;
         this.refreshType = refreshType;
         this.lastRefreshedTime = lastRefreshedTime;
         this.lastRefreshedUser = lastRefreshedUser;
         this.isEnabled = isEnabled;
-        this.iocMapStore = iocMapStore;
+        this.iocMapStore = iocMapStore != null ? iocMapStore : new HashMap<>();
         this.iocTypes = iocTypes;
     }
 
@@ -202,6 +201,18 @@ public class SATIFSourceConfig implements TIFSourceConfig, Writeable, ScheduledJ
         builder.endObject();
         builder.endObject();
         return builder;
+    }
+
+    public static SATIFSourceConfig docParse(XContentParser xcp, String id, Long version) throws IOException {
+        XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
+        XContentParserUtils.ensureExpectedToken(XContentParser.Token.FIELD_NAME, xcp.nextToken(), xcp);
+        XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
+        SATIFSourceConfig satifSourceConfig = parse(xcp, id, version);
+        XContentParserUtils.ensureExpectedToken(XContentParser.Token.END_OBJECT, xcp.nextToken(), xcp);
+
+        satifSourceConfig.setId(id);
+        satifSourceConfig.setVersion(version);
+        return satifSourceConfig;
     }
 
     public static SATIFSourceConfig parse(XContentParser xcp, String id, Long version) throws IOException {

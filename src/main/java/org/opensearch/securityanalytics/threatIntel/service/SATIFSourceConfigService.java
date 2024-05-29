@@ -81,6 +81,27 @@ public class SATIFSourceConfigService {
         satifSourceConfigDao.createJobIndexIfNotExists(createIndexStepListener);
     }
 
+    public void getTIFSourceConfig(
+            final String satifSourceConfigId,
+            final Long version,
+            final ActionListener<SATIFSourceConfig> listener
+    ) {
+        try {
+            satifSourceConfigDao.getTIFSourceConfig(satifSourceConfigId, version, new ActionListener<>() {
+                @Override
+                public void onResponse(SATIFSourceConfig satifSourceConfig) {
+                    listener.onResponse(satifSourceConfig);
+                }
+                @Override
+                public void onFailure(Exception e) {
+                    listener.onFailure(e);
+                }
+            });
+        } catch (Exception e) {
+            listener.onFailure(e);
+        }
+    }
+
     /**
      * Converts the DTO to entity
      * @param satifSourceConfigDto
