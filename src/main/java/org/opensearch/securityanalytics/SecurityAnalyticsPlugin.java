@@ -70,6 +70,7 @@ import org.opensearch.securityanalytics.resthandler.*;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
+import org.opensearch.securityanalytics.threatIntel.jobscheduler.TIFSourceConfigRunner;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestIndexTIFSourceConfigAction;
@@ -195,7 +196,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
         SaTifSourceConfigService = new SATIFSourceConfigService(client, clusterService, threadPool, xContentRegistry, threatIntelLockService);
         SATIFSourceConfigManagementService SaTifSourceConfigManagementService = new SATIFSourceConfigManagementService(SaTifSourceConfigService, threatIntelLockService);
 
-
+        TIFSourceConfigRunner.getJobRunnerInstance().initialize(clusterService, threatIntelLockService, threadPool, SaTifSourceConfigManagementService, SaTifSourceConfigService);
         TIFJobRunner.getJobRunnerInstance().initialize(clusterService, tifJobUpdateService, tifJobParameterService, threatIntelLockService, threadPool, detectorThreatIntelService);
 
         return List.of(
@@ -259,7 +260,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
 
     @Override
     public ScheduledJobRunner getJobRunner() {
-        return TIFJobRunner.getJobRunnerInstance();
+        return TIFSourceConfigRunner.getJobRunnerInstance();
     }
 
     @Override
