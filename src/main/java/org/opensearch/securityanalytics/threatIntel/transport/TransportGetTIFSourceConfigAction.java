@@ -15,9 +15,7 @@ import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigResponse;
-import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
-import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
-import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
+import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigManagementService;
 import org.opensearch.securityanalytics.transport.SecureTransportAction;
 import org.opensearch.tasks.Task;
 import org.opensearch.threadpool.ThreadPool;
@@ -35,7 +33,7 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
 
     private volatile Boolean filterByEnabled;
 
-    private final SATIFSourceConfigService SaTifConfigService;
+    private final SATIFSourceConfigManagementService SaTifConfigService;
 
     @Inject
     public TransportGetTIFSourceConfigAction(TransportService transportService,
@@ -43,7 +41,7 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
                                              ClusterService clusterService,
                                              final ThreadPool threadPool,
                                              Settings settings,
-                                             final SATIFSourceConfigService SaTifConfigService) {
+                                             final SATIFSourceConfigManagementService SaTifConfigService) {
         super(SAGetTIFSourceConfigAction.NAME, transportService, actionFilters, SAGetTIFSourceConfigRequest::new);
         this.clusterService = clusterService;
         this.threadPool = threadPool;
@@ -63,18 +61,16 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
             return;
         }
 
-        SaTifConfigService.getTIFSourceConfig(request.getId(), request.getVersion(), new ActionListener<>() {
-            @Override
-            public void onResponse(SATIFSourceConfig SaTifSourceConfig) {
-                SATIFSourceConfigDto SaTifSourceConfigDto = new SATIFSourceConfigDto(SaTifSourceConfig);
-                actionListener.onResponse(new SAGetTIFSourceConfigResponse(SaTifSourceConfigDto.getId(), SaTifSourceConfigDto.getVersion(), RestStatus.OK, SaTifSourceConfigDto));
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                actionListener.onFailure(e);
-            }
-        });
+        SaTifConfigService.getTIFSourceConfig(request.getId(), ActionListener.wrap(
+                SaTifSourceConfigDtoResponse -> actionListener.onResponse(
+                        new SAGetTIFSourceConfigResponse(
+                                SaTifSourceConfigDtoResponse.getId(),
+                                SaTifSourceConfigDtoResponse.getVersion(),
+                                RestStatus.OK,
+                                SaTifSourceConfigDtoResponse
+                        )
+                ), actionListener::onFailure)
+        );
     }
 
     private void setFilterByEnabled(boolean filterByEnabled) {
