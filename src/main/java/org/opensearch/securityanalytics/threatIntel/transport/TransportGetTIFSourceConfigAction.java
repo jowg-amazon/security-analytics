@@ -15,6 +15,8 @@ import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigRequest;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigResponse;
+import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
+import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigManagementService;
 import org.opensearch.securityanalytics.transport.SecureTransportAction;
 import org.opensearch.tasks.Task;
