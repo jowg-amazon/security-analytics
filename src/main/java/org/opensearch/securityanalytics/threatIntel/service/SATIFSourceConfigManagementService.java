@@ -204,6 +204,7 @@ public class SATIFSourceConfigManagementService {
                 SaTifSourceConfigDto.getName(),
                 SaTifSourceConfigDto.getFeedFormat(),
                 SaTifSourceConfigDto.getFeedType(),
+                SaTifSourceConfigDto.getDescription(),
                 SaTifSourceConfigDto.getCreatedByUser(),
                 SaTifSourceConfigDto.getCreatedAt(),
                 SaTifSourceConfigDto.getEnabledTime(),

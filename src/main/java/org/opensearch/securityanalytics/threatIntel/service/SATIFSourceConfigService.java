@@ -123,6 +123,7 @@ public class SATIFSourceConfigService {
                 SaTifSourceConfig.getName(),
                 SaTifSourceConfig.getFeedFormat(),
                 SaTifSourceConfig.getFeedType(),
+                SaTifSourceConfig.getDescription(),
                 SaTifSourceConfig.getCreatedByUser(),
                 SaTifSourceConfig.getCreatedAt(),
                 SaTifSourceConfig.getEnabledTime(),
