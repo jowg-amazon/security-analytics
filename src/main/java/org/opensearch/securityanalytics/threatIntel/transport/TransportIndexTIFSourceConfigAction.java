@@ -100,14 +100,17 @@ public class TransportIndexTIFSourceConfigAction extends HandledTransportAction<
                         SaTifSourceConfigManagementService.createIocAndTIFSourceConfig(SaTifSourceConfigDto,
                                 lock,
                                 ActionListener.wrap(
-                                        SaTifSourceConfigDtoResponse -> listener.onResponse(
-                                                new SAIndexTIFSourceConfigResponse(
-                                                        SaTifSourceConfigDtoResponse.getId(),
-                                                        SaTifSourceConfigDtoResponse.getVersion(),
-                                                        RestStatus.OK,
-                                                        SaTifSourceConfigDtoResponse
-                                                )
-                                        ),
+                                        SaTifSourceConfigDtoResponse -> {
+                                            lockService.releaseLock(lock);
+                                            listener.onResponse(
+                                                    new SAIndexTIFSourceConfigResponse(
+                                                            SaTifSourceConfigDtoResponse.getId(),
+                                                            SaTifSourceConfigDtoResponse.getVersion(),
+                                                            RestStatus.OK,
+                                                            SaTifSourceConfigDtoResponse
+                                                    )
+                                            );
+                                        },
                                         listener::onFailure
                                 )
                         );

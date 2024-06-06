@@ -15,6 +15,8 @@ import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service class for threat intel feed source config object
@@ -117,6 +119,21 @@ public class SATIFSourceConfigManagementService {
                         listener.onResponse(returnedSaTifSourceConfigDto);
                     }, listener::onFailure
             ));
+        } catch (Exception e) {
+            listener.onFailure(e);
+        }
+    }
+
+    public void listTIFSourceConfigs(
+            final ActionListener<List<SATIFSourceConfigDto>> listener
+    ) {
+        try {
+            SaTifSourceConfigService.listTIFSourceConfigs(ActionListener.wrap(
+                    SaTifSourceConfigsResponse -> {
+                        listener.onResponse(SaTifSourceConfigsResponse.stream().map(SATIFSourceConfigDto::new).collect(Collectors.toList()));
+                    }, listener::onFailure
+            ));
+
         } catch (Exception e) {
             listener.onFailure(e);
         }

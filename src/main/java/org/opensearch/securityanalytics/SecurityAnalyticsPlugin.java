@@ -69,6 +69,8 @@ import org.opensearch.securityanalytics.model.ThreatIntelFeedData;
 import org.opensearch.securityanalytics.resthandler.*;
 import org.opensearch.securityanalytics.threatIntel.action.SAGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAIndexTIFSourceConfigAction;
+import org.opensearch.securityanalytics.threatIntel.action.SAListTIFSourceConfigsAction;
+import org.opensearch.securityanalytics.threatIntel.resthandler.RestListTIFSourceConfigsAction;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigService;
 import org.opensearch.securityanalytics.threatIntel.jobscheduler.TIFSourceConfigRunner;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
@@ -80,6 +82,7 @@ import org.opensearch.securityanalytics.threatIntel.service.ThreatIntelFeedDataS
 import org.opensearch.securityanalytics.threatIntel.action.PutTIFJobAction;
 import org.opensearch.securityanalytics.threatIntel.transport.TransportGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.transport.TransportIndexTIFSourceConfigAction;
+import org.opensearch.securityanalytics.threatIntel.transport.TransportListTIFSourceConfigsAction;
 import org.opensearch.securityanalytics.threatIntel.transport.TransportPutTIFJobAction;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.feedMetadata.BuiltInTIFMetadataLoader;
@@ -244,7 +247,8 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
                 new RestSearchCustomLogTypeAction(),
                 new RestDeleteCustomLogTypeAction(),
                 new RestIndexTIFSourceConfigAction(),
-                new RestGetTIFSourceConfigAction()
+                new RestGetTIFSourceConfigAction(),
+                new RestListTIFSourceConfigsAction()
         );
     }
 
@@ -381,7 +385,8 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
                 new ActionHandler<>(DeleteCustomLogTypeAction.INSTANCE, TransportDeleteCustomLogTypeAction.class),
                 new ActionHandler<>(PutTIFJobAction.INSTANCE, TransportPutTIFJobAction.class),
                 new ActionHandler<>(SAIndexTIFSourceConfigAction.INSTANCE, TransportIndexTIFSourceConfigAction.class),
-                new ActionHandler<>(SAGetTIFSourceConfigAction.INSTANCE, TransportGetTIFSourceConfigAction.class)
+                new ActionHandler<>(SAGetTIFSourceConfigAction.INSTANCE, TransportGetTIFSourceConfigAction.class),
+                new ActionHandler<>(SAListTIFSourceConfigsAction.INSTANCE, TransportListTIFSourceConfigsAction.class)
         );
     }
 
