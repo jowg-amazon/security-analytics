@@ -34,6 +34,7 @@ public class IndexTIFSourceConfigResponseTests extends OpenSearchTestCase {
                 null,
                 null,
                 null,
+                null,
                 schedule,
                 null,
                 null,

@@ -2849,6 +2849,7 @@ public class TestHelpers {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -2859,6 +2860,7 @@ public class TestHelpers {
             FeedType feedType,
             String createdByUser,
             Instant createdAt,
+            String description,
             Instant enabledTime,
             Instant lastUpdateTime,
             org.opensearch.jobscheduler.spi.schedule.IntervalSchedule schedule,
@@ -2895,6 +2897,7 @@ public class TestHelpers {
                 feedName,
                 feedFormat,
                 feedType,
+                description,
                 createdByUser,
                 createdAt,
                 enabledTime,
