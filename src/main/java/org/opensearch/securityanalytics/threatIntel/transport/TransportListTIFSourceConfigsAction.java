@@ -21,8 +21,6 @@ import org.opensearch.tasks.Task;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.TransportService;
 
-import java.util.stream.Collectors;
-
 public class TransportListTIFSourceConfigsAction extends HandledTransportAction<SAListTIFSourceConfigsRequest, SAListTIFSourceConfigsResponse> implements SecureTransportAction {
 
     private static final Logger log = LogManager.getLogger(TransportListTIFSourceConfigsAction.class);
@@ -65,8 +63,12 @@ public class TransportListTIFSourceConfigsAction extends HandledTransportAction<
 
         SaTifConfigService.listTIFSourceConfigs(ActionListener.wrap(
                 r -> {
+                    log.debug("Successfully listed all threat intel source configs");
                     actionListener.onResponse(new SAListTIFSourceConfigsResponse(r));
-                }, actionListener::onFailure
+                }, e -> {
+                    log.error("Failed to list all threat intel source configs");
+                    actionListener.onFailure(e);
+                }
         ));
     }
 

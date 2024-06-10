@@ -11,9 +11,6 @@ import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 
 import java.io.IOException;
-import java.util.Locale;
-
-import static org.opensearch.action.ValidateActions.addValidationError;
 
 /**
  * List threat intel feed source config request

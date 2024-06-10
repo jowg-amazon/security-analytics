@@ -7,7 +7,6 @@ package org.opensearch.securityanalytics.threatIntel.action;
 import org.opensearch.core.action.ActionResponse;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
-import org.opensearch.core.rest.RestStatus;
 import org.opensearch.core.xcontent.ToXContentObject;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
@@ -15,9 +14,6 @@ import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-
-import static org.opensearch.securityanalytics.util.RestHandlerUtils._ID;
-import static org.opensearch.securityanalytics.util.RestHandlerUtils._VERSION;
 
 public class SAListTIFSourceConfigsResponse extends ActionResponse implements ToXContentObject {
 
