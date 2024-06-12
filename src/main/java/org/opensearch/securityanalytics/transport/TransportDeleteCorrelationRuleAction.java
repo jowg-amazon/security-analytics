@@ -8,6 +8,7 @@
 
 package org.opensearch.securityanalytics.transport;
 
+import java.util.Collections;
 import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +20,7 @@ import org.opensearch.action.support.WriteRequest;
 import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.Client;
 import org.opensearch.common.inject.Inject;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.index.reindex.BulkByScrollResponse;
 import org.opensearch.index.reindex.DeleteByQueryAction;
@@ -36,6 +38,7 @@ public class TransportDeleteCorrelationRuleAction extends HandledTransportAction
     private static final Logger log = LogManager.getLogger(TransportDeleteCorrelationRuleAction.class);
 
     private final Client client;
+
 
     @Inject
     public TransportDeleteCorrelationRuleAction(
@@ -72,6 +75,8 @@ public class TransportDeleteCorrelationRuleAction extends HandledTransportAction
                             );
                             return;
                         }
+                        // update the alerts assosciated with correlation Rules, with error STATE and errorMessage
+                        log.debug("Updating Correlation Alerts with error Message for ruleId: " + correlationRuleId);
                         listener.onResponse(new AcknowledgedResponse(true));
                     }
 
