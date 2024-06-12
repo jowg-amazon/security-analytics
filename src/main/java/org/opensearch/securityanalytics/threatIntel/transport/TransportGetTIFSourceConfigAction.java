@@ -63,6 +63,8 @@ public class TransportGetTIFSourceConfigAction extends HandledTransportAction<SA
             return;
         }
 
+        this.threadPool.getThreadContext().stashContext();
+
         SaTifConfigService.getTIFSourceConfig(request.getId(), ActionListener.wrap(
                 SaTifSourceConfigDtoResponse -> actionListener.onResponse(
                         new SAGetTIFSourceConfigResponse(

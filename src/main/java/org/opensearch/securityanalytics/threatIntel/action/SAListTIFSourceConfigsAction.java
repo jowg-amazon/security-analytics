@@ -6,17 +6,18 @@
 package org.opensearch.securityanalytics.threatIntel.action;
 
 import org.opensearch.action.ActionType;
+import org.opensearch.action.search.SearchResponse;
 
-import static org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigAction.LIST_TIF_SOURCE_CONFIGS_ACTION_NAME;
+import static org.opensearch.securityanalytics.threatIntel.sacommons.IndexTIFSourceConfigAction.SEARCH_TIF_SOURCE_CONFIGS_ACTION_NAME;
 
 /**
  * List TIF Source Configs Action
  */
-public class SAListTIFSourceConfigsAction extends ActionType<SAListTIFSourceConfigsResponse> {
+public class SAListTIFSourceConfigsAction extends ActionType<SearchResponse> {
 
     public static final SAListTIFSourceConfigsAction INSTANCE = new SAListTIFSourceConfigsAction();
-    public static final String NAME = LIST_TIF_SOURCE_CONFIGS_ACTION_NAME;
+    public static final String NAME = SEARCH_TIF_SOURCE_CONFIGS_ACTION_NAME;
     private SAListTIFSourceConfigsAction() {
-        super(NAME, SAListTIFSourceConfigsResponse::new);
+        super(NAME, SearchResponse::new);
     }
 }

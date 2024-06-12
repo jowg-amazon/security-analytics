@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.ResourceNotFoundException;
 import org.opensearch.action.delete.DeleteResponse;
 import org.opensearch.action.index.IndexResponse;
+import org.opensearch.action.search.SearchRequest;
+import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.extensions.AcknowledgedResponse;
@@ -15,8 +17,6 @@ import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service class for threat intel feed source config object
@@ -133,15 +133,17 @@ public class SATIFSourceConfigManagementService {
         ));
     }
 
-    public void listTIFSourceConfigs(
-            final ActionListener<List<SATIFSourceConfigDto>> listener
+    public void searchTIFSourceConfigs(
+            final SearchRequest searchRequest,
+            final ActionListener<SearchResponse> listener
     ) {
         try {
-            SaTifSourceConfigService.listTIFSourceConfigs(ActionListener.wrap(
-                    SaTifSourceConfigsResponse -> {
-                        listener.onResponse(SaTifSourceConfigsResponse.stream().map(SATIFSourceConfigDto::new).collect(Collectors.toList()));
-                    }, listener::onFailure
-            ));
+//            SaTifSourceConfigService.listTIFSourceConfigs(ActionListener.wrap(
+//                    SaTifSourceConfigsResponse -> {
+//                        listener.onResponse(SaTifSourceConfigsResponse.stream().map(SATIFSourceConfigDto::new).collect(Collectors.toList()));
+//                    }, listener::onFailure
+//            ));
+            SaTifSourceConfigService.searchTIFSourceConfigs(searchRequest, listener);
 
         } catch (Exception e) {
             listener.onFailure(e);

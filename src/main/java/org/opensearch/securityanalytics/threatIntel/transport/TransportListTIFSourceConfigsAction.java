@@ -3,6 +3,7 @@ package org.opensearch.securityanalytics.threatIntel.transport;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.OpenSearchStatusException;
+import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.support.ActionFilters;
 import org.opensearch.action.support.HandledTransportAction;
 import org.opensearch.cluster.service.ClusterService;
@@ -14,14 +15,13 @@ import org.opensearch.core.rest.RestStatus;
 import org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings;
 import org.opensearch.securityanalytics.threatIntel.action.SAListTIFSourceConfigsAction;
 import org.opensearch.securityanalytics.threatIntel.action.SAListTIFSourceConfigsRequest;
-import org.opensearch.securityanalytics.threatIntel.action.SAListTIFSourceConfigsResponse;
 import org.opensearch.securityanalytics.threatIntel.service.SATIFSourceConfigManagementService;
 import org.opensearch.securityanalytics.transport.SecureTransportAction;
 import org.opensearch.tasks.Task;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.TransportService;
 
-public class TransportListTIFSourceConfigsAction extends HandledTransportAction<SAListTIFSourceConfigsRequest, SAListTIFSourceConfigsResponse> implements SecureTransportAction {
+public class TransportListTIFSourceConfigsAction extends HandledTransportAction<SAListTIFSourceConfigsRequest, SearchResponse> implements SecureTransportAction {
 
     private static final Logger log = LogManager.getLogger(TransportListTIFSourceConfigsAction.class);
 
@@ -52,19 +52,22 @@ public class TransportListTIFSourceConfigsAction extends HandledTransportAction<
     }
 
     @Override
-    protected void doExecute(Task task, SAListTIFSourceConfigsRequest request, ActionListener<SAListTIFSourceConfigsResponse> actionListener) {
+    protected void doExecute(Task task, SAListTIFSourceConfigsRequest request, ActionListener<SearchResponse> actionListener) {
         // validate user
         User user = readUserFromThreadContext(this.threadPool);
+
         String validateBackendRoleMessage = validateUserBackendRoles(user, this.filterByEnabled);
         if (!"".equals(validateBackendRoleMessage)) {
             actionListener.onFailure(new OpenSearchStatusException("Do not have permissions to resource", RestStatus.FORBIDDEN));
             return;
         }
 
-        SaTifConfigService.listTIFSourceConfigs(ActionListener.wrap(
+        this.threadPool.getThreadContext().stashContext();
+
+        SaTifConfigService.searchTIFSourceConfigs(request.getSearchRequest(), ActionListener.wrap(
                 r -> {
                     log.debug("Successfully listed all threat intel source configs");
-                    actionListener.onResponse(new SAListTIFSourceConfigsResponse(r));
+                    actionListener.onResponse(r);
                 }, e -> {
                     log.error("Failed to list all threat intel source configs");
                     actionListener.onFailure(e);

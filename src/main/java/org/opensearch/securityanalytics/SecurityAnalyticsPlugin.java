@@ -123,6 +123,7 @@ import org.opensearch.securityanalytics.threatIntel.feedMetadata.BuiltInTIFMetad
 import org.opensearch.securityanalytics.threatIntel.jobscheduler.TIFJobRunner;
 import org.opensearch.securityanalytics.threatIntel.jobscheduler.TIFSourceConfigRunner;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
+import org.opensearch.securityanalytics.threatIntel.model.TIFJobParameter;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestGetTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestIndexTIFSourceConfigAction;
 import org.opensearch.securityanalytics.threatIntel.resthandler.RestListTIFSourceConfigsAction;
@@ -356,7 +357,7 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
     @Override
     public ScheduledJobParser getJobParser() {
         return (xcp, id, jobDocVersion) -> {
-            XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
+//            XContentParserUtils.ensureExpectedToken(XContentParser.Token.START_OBJECT, xcp.nextToken(), xcp);
             while (xcp.nextToken() != XContentParser.Token.END_OBJECT) {
                 String fieldName = xcp.currentName();
                 xcp.nextToken();
@@ -364,8 +365,9 @@ public class SecurityAnalyticsPlugin extends Plugin implements ActionPlugin, Map
                     case FEED_SOURCE_CONFIG_FIELD:
                         return SATIFSourceConfig.parse(xcp, id, null);
                     default:
-                        log.error("Job parser failed for [{}] in security analytics job registration", fieldName);
-                        xcp.skipChildren();
+                        return TIFJobParameter.PARSER.parse(xcp, null);
+//                        log.error("Job parser failed for [{}] in security analytics job registration", fieldName);
+//                        xcp.skipChildren();
                 }
             }
             return null;
