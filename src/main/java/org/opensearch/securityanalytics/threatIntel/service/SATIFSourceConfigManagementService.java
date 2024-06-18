@@ -239,8 +239,8 @@ public class SATIFSourceConfigManagementService {
                 SaTifSourceConfigDto.getId(),
                 SaTifSourceConfigDto.getVersion(),
                 SaTifSourceConfigDto.getName(),
-                SaTifSourceConfigDto.getFeedFormat(),
-                SaTifSourceConfigDto.getFeedType(),
+                SaTifSourceConfigDto.getFormat(),
+                SaTifSourceConfigDto.getType(),
                 SaTifSourceConfigDto.getDescription(),
                 SaTifSourceConfigDto.getCreatedByUser(),
                 SaTifSourceConfigDto.getCreatedAt(),
@@ -257,4 +257,29 @@ public class SATIFSourceConfigManagementService {
                 SaTifSourceConfigDto.getIocTypes()
         );
     }
+
+    private SATIFSourceConfig updateSaTifSourceConfig(SATIFSourceConfigDto SaTifSourceConfigDto, SATIFSourceConfig saTifSourceConfig) {
+        return new SATIFSourceConfig(
+                saTifSourceConfig.getId(),
+                saTifSourceConfig.getVersion(),
+                SaTifSourceConfigDto.getName(),
+                SaTifSourceConfigDto.getFormat(),
+                SaTifSourceConfigDto.getType(),
+                SaTifSourceConfigDto.getDescription(),
+                saTifSourceConfig.getCreatedByUser(),
+                saTifSourceConfig.getCreatedAt(),
+                SaTifSourceConfigDto.getSource(),
+                saTifSourceConfig.getEnabledTime(),
+                saTifSourceConfig.getLastUpdateTime(),
+                SaTifSourceConfigDto.getSchedule(),
+                saTifSourceConfig.getState(),
+                SaTifSourceConfigDto.getRefreshType(),
+                saTifSourceConfig.getLastRefreshedTime(),
+                saTifSourceConfig.getLastRefreshedUser(),
+                SaTifSourceConfigDto.isEnabled(),
+                saTifSourceConfig.getIocStoreConfig(),
+                SaTifSourceConfigDto.getIocTypes()
+        );
+    }
+
 }
