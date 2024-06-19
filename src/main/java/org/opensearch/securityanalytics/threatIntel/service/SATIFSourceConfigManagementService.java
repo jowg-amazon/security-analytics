@@ -8,9 +8,9 @@ import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.core.action.ActionListener;
+import org.opensearch.extensions.AcknowledgedResponse;
 import org.opensearch.jobscheduler.spi.LockModel;
 import org.opensearch.rest.RestRequest;
-import org.opensearch.securityanalytics.services.STIX2IOCFetchService;
 import org.opensearch.securityanalytics.threatIntel.common.TIFJobState;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.model.IocStoreConfig;
@@ -26,24 +26,20 @@ public class SATIFSourceConfigManagementService {
     private static final Logger log = LogManager.getLogger(SATIFSourceConfigManagementService.class);
     private final SATIFSourceConfigService saTifSourceConfigService;
     private final TIFLockService lockService; //TODO: change to js impl lock
-    private final STIX2IOCFetchService stix2IOCFetchService;
 
     /**
      * Default constructor
      *
-     * @param saTifSourceConfigService the tif source config dao
+     * @param SaTifSourceConfigService the tif source config dao
      * @param lockService              the lock service
-     * @param stix2IOCFetchService the service to download, and store IOCs
      */
     @Inject
     public SATIFSourceConfigManagementService(
-            final SATIFSourceConfigService saTifSourceConfigService,
-            final TIFLockService lockService,
-            final STIX2IOCFetchService stix2IOCFetchService
+            final SATIFSourceConfigService SaTifSourceConfigService,
+            final TIFLockService lockService
     ) {
-        this.saTifSourceConfigService = saTifSourceConfigService;
+        this.saTifSourceConfigService = SaTifSourceConfigService;
         this.lockService = lockService;
-        this.stix2IOCFetchService = stix2IOCFetchService;
     }
 
     public void createOrUpdateTifSourceConfig(
@@ -118,11 +114,16 @@ public class SATIFSourceConfigManagementService {
     }
 
     // Temp function to download and save IOCs (i.e. refresh)
-    public void downloadAndSaveIOCs(SATIFSourceConfig saTifSourceConfig, ActionListener<STIX2IOCFetchService.STIX2IOCFetchResponse> actionListener) {
+    public void downloadAndSaveIOCs(SATIFSourceConfig SaTifSourceConfig, ActionListener<AcknowledgedResponse> actionListener) {
+        if (SaTifSourceConfig.getState() != TIFJobState.CREATING) {
+            SaTifSourceConfig.setState(TIFJobState.REFRESHING);
+        }
+        SaTifSourceConfig.setLastRefreshedTime(Instant.now());
+
         // call to update or create IOCs - state can be either creating or refreshing here
             // on success, change state back to available
             // on failure, change state to refresh failed and mark source config as refresh failed
-        stix2IOCFetchService.fetchIocs(saTifSourceConfig, actionListener);
+        actionListener.onResponse(null); // TODO: remove once method is called with actionListener
     }
 
     public void getTIFSourceConfig(
