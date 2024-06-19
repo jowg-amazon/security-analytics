@@ -7,6 +7,7 @@ package org.opensearch.securityanalytics.threatIntel.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.opensearch.OpenSearchException;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.ResourceAlreadyExistsException;
 import org.opensearch.action.StepListener;
@@ -211,11 +212,14 @@ public class SATIFSourceConfigService {
                                 getResponse.getSourceAsBytesRef(), XContentType.JSON
                         );
                         saTifSourceConfig = SATIFSourceConfig.docParse(xcp, getResponse.getId(), getResponse.getVersion());
-                        assert saTifSourceConfig != null;
                     }
-                    // TODO: return failure if the response is empty
-                    log.debug("Threat intel source config with id [{}] fetched", getResponse.getId());
-                    actionListener.onResponse(saTifSourceConfig);
+                    if (saTifSourceConfig == null) {
+                        // TODO: return failure if the response is empty - test this
+                        actionListener.onFailure(new OpenSearchException("Failed to parse threat intel source config [{}]", tifSourceConfigId));
+                    } else {
+                        log.debug("Threat intel source config with id [{}] fetched", getResponse.getId());
+                        actionListener.onResponse(saTifSourceConfig);
+                    }
                 }, e -> {
                     log.error("Failed to fetch threat intel source config document", e);
                     actionListener.onFailure(e);
@@ -227,26 +231,26 @@ public class SATIFSourceConfigService {
             final SearchRequest searchRequest,
             final ActionListener<SearchResponse> actionListener
     ) {
-        try {
-            client.search(searchRequest, ActionListener.wrap(
-                    searchResponse -> {
-                        if (searchResponse.isTimedOut()) {
-                            actionListener.onFailure(SecurityAnalyticsException.wrap(new OpenSearchStatusException("Search threat intel source configs request timed out", RestStatus.REQUEST_TIMEOUT)));
-                            return;
-                        }
-
-                        log.debug("Fetched all threat intel source configs successfully.");
-                        actionListener.onResponse(searchResponse);
-                    }, e -> {
-                        log.error("Failed to fetch all threat intel source configs for search request [{}]", searchRequest, e);
-                        // TODO: check index does not exist and return
-                        actionListener.onFailure(e);
-                    })
-            );
-        } catch (Exception e) {
-            log.error("Failed to fetch all threat intel source configs for search request [{}]", searchRequest, e);
-            actionListener.onFailure(e);
+        // check to make sure the job index exists
+        if (clusterService.state().metadata().hasIndex(SecurityAnalyticsPlugin.JOB_INDEX_NAME) == false) {
+            actionListener.onFailure(new OpenSearchException("Threat intel source config index does not exist"));
+            return;
         }
+
+        client.search(searchRequest, ActionListener.wrap(
+                searchResponse -> {
+                    if (searchResponse.isTimedOut()) {
+                        actionListener.onFailure(SecurityAnalyticsException.wrap(new OpenSearchStatusException("Search threat intel source configs request timed out", RestStatus.REQUEST_TIMEOUT)));
+                        return;
+                    }
+
+                    log.debug("Fetched all threat intel source configs successfully.");
+                    actionListener.onResponse(searchResponse);
+                }, e -> {
+                    log.error("Failed to fetch all threat intel source configs for search request [{}]", searchRequest, e);
+                    actionListener.onFailure(e);
+                })
+        );
     }
 
 
@@ -282,6 +286,12 @@ public class SATIFSourceConfigService {
             SATIFSourceConfig saTifSourceConfig,
             final ActionListener<DeleteResponse> actionListener
     ) {
+        // check to make sure the job index exists
+        if (clusterService.state().metadata().hasIndex(SecurityAnalyticsPlugin.JOB_INDEX_NAME) == false) {
+            actionListener.onFailure(new OpenSearchException("Threat intel source config index does not exist"));
+            return;
+        }
+
         DeleteRequest request = new DeleteRequest(SecurityAnalyticsPlugin.JOB_INDEX_NAME, saTifSourceConfig.getId())
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .timeout(clusterSettings.get(INDEX_TIMEOUT));
@@ -292,9 +302,9 @@ public class SATIFSourceConfigService {
                         log.debug("Deleted threat intel source config [{}] successfully", saTifSourceConfig.getId());
                         actionListener.onResponse(deleteResponse);
                     } else if (deleteResponse.status().equals(RestStatus.NOT_FOUND)) {
-                        throw SecurityAnalyticsException.wrap(new OpenSearchStatusException(String.format(Locale.getDefault(), "Threat intel source config with id [{%s}] not found", saTifSourceConfig.getId()), RestStatus.NOT_FOUND));
+                        actionListener.onFailure(SecurityAnalyticsException.wrap(new OpenSearchStatusException(String.format(Locale.getDefault(), "Threat intel source config with id [{%s}] not found", saTifSourceConfig.getId()), RestStatus.NOT_FOUND)));
                     } else {
-                        throw SecurityAnalyticsException.wrap(new OpenSearchStatusException(String.format(Locale.getDefault(), "Failed to delete threat intel source config [{%s}]", saTifSourceConfig.getId()), deleteResponse.status()));
+                        actionListener.onFailure(SecurityAnalyticsException.wrap(new OpenSearchStatusException(String.format(Locale.getDefault(), "Failed to delete threat intel source config [{%s}]", saTifSourceConfig.getId()), deleteResponse.status())));
                     }
                 }, e -> {
                     log.error("Failed to delete threat intel source config with id [{}]", saTifSourceConfig.getId());
