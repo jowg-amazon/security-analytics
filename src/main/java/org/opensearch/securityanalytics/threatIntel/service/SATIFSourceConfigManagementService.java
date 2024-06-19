@@ -8,12 +8,25 @@ import org.opensearch.ResourceNotFoundException;
 import org.opensearch.action.delete.DeleteResponse;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.cluster.routing.Preference;
 import org.opensearch.common.inject.Inject;
+import org.opensearch.common.xcontent.LoggingDeprecationHandler;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.core.action.ActionListener;
+import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.core.rest.RestStatus;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
+import org.opensearch.core.xcontent.ToXContent;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.index.IndexNotFoundException;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.jobscheduler.spi.LockModel;
 import org.opensearch.rest.RestRequest;
+import org.opensearch.search.SearchHit;
+import org.opensearch.securityanalytics.SecurityAnalyticsPlugin;
 import org.opensearch.securityanalytics.services.STIX2IOCFetchService;
 import org.opensearch.securityanalytics.threatIntel.common.TIFJobState;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
@@ -32,6 +45,7 @@ public class SATIFSourceConfigManagementService {
     private final SATIFSourceConfigService saTifSourceConfigService;
     private final TIFLockService lockService; //TODO: change to js impl lock
     private final STIX2IOCFetchService stix2IOCFetchService;
+    private final NamedXContentRegistry xContentRegistry;
 
     /**
      * Default constructor
@@ -44,11 +58,14 @@ public class SATIFSourceConfigManagementService {
     public SATIFSourceConfigManagementService(
             final SATIFSourceConfigService saTifSourceConfigService,
             final TIFLockService lockService,
-            final STIX2IOCFetchService stix2IOCFetchService
+            final STIX2IOCFetchService stix2IOCFetchService,
+            NamedXContentRegistry xContentRegistry
+
     ) {
         this.saTifSourceConfigService = saTifSourceConfigService;
         this.lockService = lockService;
         this.stix2IOCFetchService = stix2IOCFetchService;
+        this.xContentRegistry = xContentRegistry;
     }
 
     public void createOrUpdateTifSourceConfig(
@@ -155,11 +172,50 @@ public class SATIFSourceConfigManagementService {
             final ActionListener<SearchResponse> listener
     ) {
         try {
-            saTifSourceConfigService.searchTIFSourceConfigs(searchRequest, listener);
-            // TODO: Convert response to source config dto
+            SearchRequest newSearchRequest = getSearchRequest(searchRequest);
+
+            // convert search response to threat intel source config dtos
+            saTifSourceConfigService.searchTIFSourceConfigs(newSearchRequest, ActionListener.wrap(
+                    searchResponse -> {
+                        for (SearchHit hit: searchResponse.getHits()) {
+                            XContentParser xcp = XContentType.JSON.xContent().createParser(
+                                    xContentRegistry,
+                                    LoggingDeprecationHandler.INSTANCE, hit.getSourceAsString()
+                            );
+                            SATIFSourceConfigDto satifSourceConfigDto = SATIFSourceConfigDto.docParse(xcp, hit.getId(), hit.getVersion());
+                            XContentBuilder xcb = satifSourceConfigDto.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS);
+                            hit.sourceRef(BytesReference.bytes(xcb));
+                        }
+                        listener.onResponse(searchResponse);
+                    }, e -> {
+                        log.error("Failed to fetch all threat intel source configs for search request [{}]", searchRequest, e);
+                        listener.onFailure(e);
+                    }
+            ));
         } catch (Exception e) {
+            log.error("Failed to search and parse all threat intel source configs");
             listener.onFailure(e);
         }
+    }
+
+    private static SearchRequest getSearchRequest(SearchRequest searchRequest) {
+        searchRequest.indices(SecurityAnalyticsPlugin.JOB_INDEX_NAME);
+        searchRequest.preference(Preference.PRIMARY_FIRST.type());
+
+        BoolQueryBuilder boolQueryBuilder;
+
+        if (searchRequest.source().query() == null) {
+            boolQueryBuilder = new BoolQueryBuilder();
+        } else {
+            boolQueryBuilder = QueryBuilders.boolQuery().must(searchRequest.source().query());
+        }
+
+        BoolQueryBuilder bqb = new BoolQueryBuilder();
+        bqb.should().add(new BoolQueryBuilder().must(QueryBuilders.existsQuery("feed_source_config")));
+
+        boolQueryBuilder.filter(bqb);
+        searchRequest.source().query(boolQueryBuilder);
+        return searchRequest;
     }
 
     public void updateIocAndTIFSourceConfig(
@@ -170,11 +226,11 @@ public class SATIFSourceConfigManagementService {
         try {
             saTifSourceConfigService.getTIFSourceConfig(saTifSourceConfigDto.getId(), ActionListener.wrap(
                     retrievedSaTifSourceConfig -> {
-                        if (retrievedSaTifSourceConfig == null) {
-                            log.error("Threat intel source config [{}] does not exist", saTifSourceConfigDto.getId());
-                            listener.onFailure(new OpenSearchException("Threat intel source config [{}] does not exist", saTifSourceConfigDto.getId()));
-                            return;
-                        }
+//                        if (retrievedSaTifSourceConfig == null) {
+//                            log.error("Threat intel source config [{}] does not exist", saTifSourceConfigDto.getId());
+//                            listener.onFailure(new OpenSearchException("Threat intel source config [{}] does not exist", saTifSourceConfigDto.getId()));
+//                            return;
+//                        }
 
                         if (TIFJobState.AVAILABLE.equals(retrievedSaTifSourceConfig.getState()) == false) {
                             log.error("Invalid TIF job state. Expecting {} but received {}", TIFJobState.AVAILABLE, retrievedSaTifSourceConfig.getState());
@@ -247,11 +303,11 @@ public class SATIFSourceConfigManagementService {
     ) {
         saTifSourceConfigService.getTIFSourceConfig(saTifSourceConfigId, ActionListener.wrap(
                 saTifSourceConfig -> {
-                    if (saTifSourceConfig == null) {
-                        log.info("Threat intel source config [{}] does not exist", saTifSourceConfigId);
-                        listener.onFailure(new OpenSearchException("Threat intel source config [{}] does not exist", saTifSourceConfigId));
-                        return;
-                    }
+//                    if (saTifSourceConfig == null) {
+//                        log.info("Threat intel source config [{}] does not exist", saTifSourceConfigId);
+//                        listener.onFailure(new OpenSearchException("Threat intel source config [{}] does not exist", saTifSourceConfigId));
+//                        return;
+//                    }
 
                     if (TIFJobState.AVAILABLE.equals(saTifSourceConfig.getState()) == false || TIFJobState.REFRESH_FAILED.equals(saTifSourceConfig.getState()) == false) {
                         log.error("Invalid TIF job state. Expecting {} or {} but received {}", TIFJobState.AVAILABLE, TIFJobState.REFRESH_FAILED, saTifSourceConfig.getState());
@@ -263,7 +319,7 @@ public class SATIFSourceConfigManagementService {
                     log.info("Refreshing IOCs and updating threat intel source config"); // place holder
                     markSourceConfigAsAction(saTifSourceConfig, TIFJobState.REFRESHING, ActionListener.wrap(
                             updatedSourceConfig -> {
-                                // TODO: download and save iocs listener should return the source config,
+                                // TODO: download and save iocs listener should return the source config, sync up with @hurneyt
                                 downloadAndSaveIOCs(updatedSourceConfig, ActionListener.wrap(
                                         // 1. call refresh IOC method (download and save IOCs)
                                         // 1a. set state to refreshing
@@ -316,10 +372,6 @@ public class SATIFSourceConfigManagementService {
     ) {
         saTifSourceConfigService.getTIFSourceConfig(saTifSourceConfigId, ActionListener.wrap(
                 saTifSourceConfig -> {
-                    if (saTifSourceConfig == null) {
-                        // TODO: this check may not be needed
-                        listener.onFailure(new ResourceNotFoundException("No threat intel source config exists [{}]", saTifSourceConfigId));
-                    }
                     // Check if all threat intel monitors are deleted
                     saTifSourceConfigService.checkAndEnsureThreatIntelMonitorsDeleted(ActionListener.wrap(
                             isDeleted -> {
@@ -350,7 +402,7 @@ public class SATIFSourceConfigManagementService {
                     TIFJobState.DELETING,
                     ActionListener.wrap(
                             updateSaTifSourceConfigResponse -> {
-                                // TODO: Delete all IOCs associated with source config then delete source config
+                                // TODO: Delete all IOCs associated with source config then delete source config, sync up with @hurneyt
                                 saTifSourceConfigService.deleteTIFSourceConfig(saTifSourceConfig, ActionListener.wrap(
                                         deleteResponse -> {
                                             log.debug("Successfully deleted threat intel source config [{}]", saTifSourceConfig.getId());

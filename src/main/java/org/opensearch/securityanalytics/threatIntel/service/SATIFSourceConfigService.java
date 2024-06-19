@@ -29,13 +29,18 @@ import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentHelper;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.core.action.ActionListener;
+import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.core.xcontent.ToXContent;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.jobscheduler.spi.LockModel;
+import org.opensearch.rest.BytesRestResponse;
+import org.opensearch.rest.RestResponse;
+import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.fetch.subphase.FetchSourceContext;
 import org.opensearch.securityanalytics.SecurityAnalyticsPlugin;
@@ -44,6 +49,7 @@ import org.opensearch.securityanalytics.threatIntel.action.monitor.request.Searc
 import org.opensearch.securityanalytics.threatIntel.common.StashedThreadContext;
 import org.opensearch.securityanalytics.threatIntel.common.TIFLockService;
 import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfig;
+import org.opensearch.securityanalytics.threatIntel.model.SATIFSourceConfigDto;
 import org.opensearch.securityanalytics.util.SecurityAnalyticsException;
 import org.opensearch.threadpool.ThreadPool;
 
@@ -55,6 +61,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import static org.opensearch.core.rest.RestStatus.OK;
 import static org.opensearch.securityanalytics.settings.SecurityAnalyticsSettings.INDEX_TIMEOUT;
 import static org.opensearch.securityanalytics.transport.TransportIndexDetectorAction.PLUGIN_OWNER_FIELD;
 
@@ -214,8 +221,7 @@ public class SATIFSourceConfigService {
                         saTifSourceConfig = SATIFSourceConfig.docParse(xcp, getResponse.getId(), getResponse.getVersion());
                     }
                     if (saTifSourceConfig == null) {
-                        // TODO: return failure if the response is empty - test this
-                        actionListener.onFailure(new OpenSearchException("Failed to parse threat intel source config [{}]", tifSourceConfigId));
+                        actionListener.onFailure(new OpenSearchException("No threat intel source config exists [{}]", tifSourceConfigId));
                     } else {
                         log.debug("Threat intel source config with id [{}] fetched", getResponse.getId());
                         actionListener.onResponse(saTifSourceConfig);
@@ -231,7 +237,7 @@ public class SATIFSourceConfigService {
             final SearchRequest searchRequest,
             final ActionListener<SearchResponse> actionListener
     ) {
-        // check to make sure the job index exists
+        // Check to make sure the job index exists
         if (clusterService.state().metadata().hasIndex(SecurityAnalyticsPlugin.JOB_INDEX_NAME) == false) {
             actionListener.onFailure(new OpenSearchException("Threat intel source config index does not exist"));
             return;
@@ -244,6 +250,17 @@ public class SATIFSourceConfigService {
                         return;
                     }
 
+                    // convert search hits to threat intel source configs
+                    for (SearchHit hit: searchResponse.getHits()) {
+                        XContentParser xcp = XContentType.JSON.xContent().createParser(
+                                xContentRegistry,
+                                LoggingDeprecationHandler.INSTANCE, hit.getSourceAsString()
+                        );
+                        SATIFSourceConfig satifSourceConfig = SATIFSourceConfig.docParse(xcp, hit.getId(), hit.getVersion());
+                        XContentBuilder xcb = satifSourceConfig.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS);
+                        hit.sourceRef(BytesReference.bytes(xcb));
+                    }
+
                     log.debug("Fetched all threat intel source configs successfully.");
                     actionListener.onResponse(searchResponse);
                 }, e -> {
@@ -253,6 +270,17 @@ public class SATIFSourceConfigService {
         );
     }
 
+//    public RestResponse buildResponse(final SearchResponse response) throws Exception {
+//        for (SearchHit hit : response.getHits()) {
+//            XContentParser xcp = XContentType.JSON.xContent().createParser(
+//                    channel.request().getXContentRegistry(),
+//                    LoggingDeprecationHandler.INSTANCE, hit.getSourceAsString());
+//            SATIFSourceConfigDto satifSourceConfigDto = SATIFSourceConfigDto.docParse(xcp, hit.getId(), hit.getVersion());
+//            XContentBuilder xcb = satifSourceConfigDto.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS);
+//            hit.sourceRef(BytesReference.bytes(xcb));
+//        }
+//        return new BytesRestResponse(OK, response.toXContent(channel.newBuilder(), ToXContent.EMPTY_PARAMS));
+//    }
 
     // Update TIF source config
     public void updateTIFSourceConfig(
