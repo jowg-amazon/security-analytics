@@ -723,11 +723,12 @@ public class SATIFSourceConfigManagementService {
     }
 
     public void markSourceConfigAsAction(final SATIFSourceConfig saTifSourceConfig, TIFJobState state, ActionListener<SATIFSourceConfig> actionListener) {
+        TIFJobState previousState = saTifSourceConfig.getState();
         saTifSourceConfig.setState(state);
         try {
             internalUpdateTIFSourceConfig(saTifSourceConfig, actionListener);
         } catch (Exception e) {
-            log.error("Failed to mark threat intel source config as {} for [{}]", state, saTifSourceConfig.getId(), e);
+            log.error("Failed to mark threat intel source config from {} to {} for [{}]", previousState, state, saTifSourceConfig.getId(), e);
             actionListener.onFailure(e);
         }
     }
