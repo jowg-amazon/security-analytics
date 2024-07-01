@@ -56,6 +56,7 @@ public class STIX2IOCFeedStore implements FeedStore {
     public static final String IOC_ALL_INDEX_PATTERN = IOC_INDEX_NAME_BASE + "-*";
     public static final String IOC_FEED_ID_PLACEHOLDER = "FEED_ID";
     public static final String IOC_INDEX_NAME_TEMPLATE = IOC_INDEX_NAME_BASE + "-" + IOC_FEED_ID_PLACEHOLDER;
+    public static final String IOC_ALL_INDEX_PATTERN_BY_ALIAS = IOC_INDEX_NAME_TEMPLATE + "-*";
     public static final String IOC_WRITE_INDEX_ALIAS = IOC_INDEX_NAME_TEMPLATE;
     public static final String IOC_TIME_PLACEHOLDER = "TIME";
     public static final String IOC_INDEX_PATTERN = IOC_INDEX_NAME_TEMPLATE + "-" + IOC_TIME_PLACEHOLDER;
@@ -126,9 +127,16 @@ public class STIX2IOCFeedStore implements FeedStore {
                         saTifSourceConfig.getIocTypes().forEach(type -> {
                             String writeIndex = IndexUtils.getWriteIndex(iocAlias, clusterService.state());
                             String lowerCaseType = type.toLowerCase(Locale.ROOT);
-                            ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocMapStore().putIfAbsent(lowerCaseType, new ArrayList<>());
-                            ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocMapStore().get(lowerCaseType).add(iocAlias);
-                            ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocMapStore().get(lowerCaseType).add(writeIndex);
+
+                            if (saTifSourceConfig.getIocStoreConfig() instanceof DefaultIocStoreConfig) {
+                                Map<String, List<String>> iocToIndex = ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocToWriteIndices();
+                                Map<String, List<String>> iocToAlias = ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocToAliases();
+
+                                iocToIndex.putIfAbsent(lowerCaseType, new ArrayList<>());
+                                iocToAlias.putIfAbsent(lowerCaseType, new ArrayList<>());
+                                iocToAlias.get(lowerCaseType).add(iocAlias);
+                                iocToIndex.get(lowerCaseType).add(writeIndex);
+                            }
                         });
                         bulkIndexIocs(iocs, iocAlias);
                     }, e-> {
@@ -142,7 +150,20 @@ public class STIX2IOCFeedStore implements FeedStore {
                         saTifSourceConfig.getIocTypes().forEach(type -> {
                             String writeIndex = IndexUtils.getWriteIndex(iocAlias, clusterService.state());
                             String lowerCaseType = type.toLowerCase(Locale.ROOT);
-                            ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocMapStore().get(lowerCaseType).add(writeIndex);
+
+                            if (saTifSourceConfig.getIocStoreConfig() instanceof DefaultIocStoreConfig) {
+                                Map<String, List<String>> iocToIndex = ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocToWriteIndices();
+                                Map<String, List<String>> iocToAlias = ((DefaultIocStoreConfig) saTifSourceConfig.getIocStoreConfig()).getIocToAliases();
+                                if (iocToIndex.containsKey(type)) {
+                                    iocToIndex.get(lowerCaseType).clear();
+                                    iocToIndex.get(lowerCaseType).add(writeIndex);
+                                } else {
+                                    iocToIndex.putIfAbsent(lowerCaseType, new ArrayList<>());
+                                    iocToAlias.putIfAbsent(lowerCaseType, new ArrayList<>());
+                                    iocToAlias.get(lowerCaseType).add(iocAlias);
+                                    iocToIndex.get(lowerCaseType).add(writeIndex);
+                                }
+                            }
                         });
                         bulkIndexIocs(iocs, iocAlias);
                     }, e -> {
@@ -243,6 +264,11 @@ public class STIX2IOCFeedStore implements FeedStore {
     public static String getIocIndexAlias(String feedSourceConfigId) {
         return IOC_WRITE_INDEX_ALIAS.replace(IOC_FEED_ID_PLACEHOLDER, feedSourceConfigId.toLowerCase(Locale.ROOT));
     }
+
+    public static String getAllIocIndexPatternByAlias(String feedSourceConfigId) {
+        return IOC_ALL_INDEX_PATTERN_BY_ALIAS.replace(IOC_FEED_ID_PLACEHOLDER, feedSourceConfigId.toLowerCase(Locale.ROOT));
+    }
+
 
     public static String getIocIndexRolloverPattern(String feedSourceConfigId) {
         return IOC_INDEX_PATTERN

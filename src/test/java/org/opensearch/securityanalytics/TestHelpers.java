@@ -2877,9 +2877,11 @@ public class TestHelpers {
             schedule = new org.opensearch.jobscheduler.spi.schedule.IntervalSchedule(Instant.now(), 1, ChronoUnit.DAYS);
         }
         if (iocStoreConfig == null) {
-            Map<String, List<String>> iocMapStore = new HashMap<>();
-            iocMapStore.put("ip", List.of("index_name"));
-            iocStoreConfig = new DefaultIocStoreConfig(iocMapStore);
+            Map<String, List<String>> iocToIndex = new HashMap<>();
+            iocToIndex.put("ip", List.of("index_name"));
+            Map<String, List<String>> iocToAlias = new HashMap<>();
+            iocToAlias.put("ip", List.of("index_name"));
+            iocStoreConfig = new DefaultIocStoreConfig(iocToIndex, iocToAlias);
         }
         if (iocTypes == null) {
             iocTypes = List.of("ip");

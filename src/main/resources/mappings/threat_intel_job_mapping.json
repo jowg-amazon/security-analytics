@@ -182,7 +182,21 @@
             "default": {
               "type": "nested",
               "properties": {
-                "ioc_map": {
+                "ioc_write_indices_map": {
+                  "type": "nested",
+                  "properties": {
+                    "ip": {
+                      "type": "text"
+                    },
+                    "domain": {
+                      "type": "text"
+                    },
+                    "hash": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "ioc_aliases_map": {
                   "type": "nested",
                   "properties": {
                     "ip": {
